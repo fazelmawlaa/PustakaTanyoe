@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Masuk — PustakaTanyoe USK</title>
+  <link rel="stylesheet" href="css/style.css"/>
+  <link rel="stylesheet" href="css/animations.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <style>
+    body { background: var(--gray-50); min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+    .auth-page { display: grid; grid-template-columns: 1fr 1fr; min-height: 100vh; width: 100%; }
+    .auth-side {
+      background: linear-gradient(135deg, var(--navy-900) 0%, var(--navy-700) 60%, var(--navy-800) 100%);
+      display: flex; flex-direction: column; justify-content: center; align-items: center;
+      padding: var(--space-12); position: relative; overflow: hidden;
+    }
+    .auth-side::before {
+      content: ''; position: absolute; inset: 0;
+      background: radial-gradient(ellipse at 30% 70%, rgba(201,162,39,0.12) 0%, transparent 50%);
+    }
+    .auth-side-content { position: relative; z-index: 1; text-align: center; max-width: 400px; }
+    .auth-side-logo {
+      width: 80px; height: 80px;
+      background: linear-gradient(135deg, var(--gold-400), var(--gold-600));
+      border-radius: var(--radius-2xl);
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-heading); font-size: 1.75rem; font-weight: 700; color: white;
+      margin: 0 auto var(--space-6);
+      box-shadow: var(--shadow-gold);
+    }
+    .auth-side-title { font-family: var(--font-heading); font-size: 2.25rem; color: white; margin-bottom: var(--space-4); }
+    .auth-side-desc { color: rgba(255,255,255,0.6); line-height: 1.75; margin-bottom: var(--space-8); }
+    .auth-side-features { display: flex; flex-direction: column; gap: var(--space-4); text-align: left; }
+    .auth-side-feature { display: flex; align-items: center; gap: var(--space-3); }
+    .auth-side-feature i { color: var(--gold-400); width: 20px; }
+    .auth-side-feature span { color: rgba(255,255,255,0.75); font-size: var(--text-sm); }
+
+    .auth-form-side {
+      display: flex; flex-direction: column; justify-content: center;
+      padding: var(--space-12) var(--space-16);
+      background: white;
+    }
+    .auth-top-link { display: flex; align-items: center; gap: var(--space-2); margin-bottom: var(--space-8); }
+    .auth-top-link a { color: var(--gold-600); font-size: var(--text-sm); font-weight: 600; }
+    .auth-form-title { font-family: var(--font-heading); font-size: var(--text-4xl); color: var(--navy-800); margin-bottom: var(--space-2); }
+    .auth-form-subtitle { color: var(--gray-500); margin-bottom: var(--space-8); font-size: var(--text-base); }
+
+    .remember-forgot { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-5); }
+    .remember-label { display: flex; align-items: center; gap: var(--space-2); font-size: var(--text-sm); color: var(--gray-600); cursor: pointer; }
+    .remember-label input { accent-color: var(--gold-500); }
+    .forgot-link { font-size: var(--text-sm); color: var(--gold-600); font-weight: 600; }
+
+    .auth-divider { display: flex; align-items: center; gap: var(--space-4); margin: var(--space-6) 0; }
+    .auth-divider hr { flex: 1; border: none; border-top: 1px solid var(--color-border); }
+    .auth-divider span { font-size: var(--text-xs); color: var(--gray-400); font-weight: 500; white-space: nowrap; }
+
+    .demo-cards { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); margin-top: var(--space-4); }
+    .demo-card {
+      border: 1.5px solid var(--color-border); border-radius: var(--radius-lg);
+      padding: var(--space-4); cursor: pointer; transition: var(--transition);
+    }
+    .demo-card:hover { border-color: var(--gold-400); background: var(--gold-50); }
+    .demo-card-label { font-size: var(--text-xs); font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--gold-600); margin-bottom: var(--space-2); }
+    .demo-card-info { font-size: var(--text-xs); color: var(--gray-500); line-height: 1.6; }
+
+    .auth-footer-link { text-align: center; margin-top: var(--space-6); font-size: var(--text-sm); color: var(--gray-500); }
+    .auth-footer-link a { color: var(--gold-600); font-weight: 700; }
+
+    @media (max-width: 1024px) {
+      .auth-page { grid-template-columns: 1fr; }
+      .auth-side { display: none; }
+      .auth-form-side { padding: var(--space-8) var(--space-6); }
+    }
+  </style>
+</head>
+<body>
+<div class="auth-page">
+  <!-- Left Side -->
+  <div class="auth-side">
+    <div class="auth-side-content animate-fadeInLeft">
+      <div style="margin-bottom: var(--space-6);">
+        <img src="assets/images/logo_pustaka_tanyoe_usk_clean.png" alt="Pustaka Tanyoe USK" style="max-height: 64px; max-width: 280px; object-fit: contain; filter: drop-shadow(0 4px 16px rgba(0,0,0,0.4));" />
+      </div>
+      <p class="auth-side-desc">Perpustakaan digital resmi Universitas Syiah Kuala. Akses ribuan koleksi buku ilmiah untuk mendukung perjalanan akademik Anda.</p>
+      <div class="auth-side-features">
+        <div class="auth-side-feature"><i class="fas fa-check-circle"></i><span>Akses 5.000+ koleksi buku ilmiah</span></div>
+        <div class="auth-side-feature"><i class="fas fa-check-circle"></i><span>Peminjaman online mudah & cepat</span></div>
+        <div class="auth-side-feature"><i class="fas fa-check-circle"></i><span>Notifikasi real-time jatuh tempo</span></div>
+        <div class="auth-side-feature"><i class="fas fa-check-circle"></i><span>Riwayat peminjaman lengkap</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Side — Form -->
+  <div class="auth-form-side animate-fadeInRight">
+    <div style="max-width: 440px; width: 100%; margin: 0 auto;">
+      <div class="auth-top-link">
+        <a href="index.html"><i class="fas fa-arrow-left"></i> Kembali ke Beranda</a>
+      </div>
+
+      <h2 class="auth-form-title">Selamat Datang Kembali</h2>
+      <p class="auth-form-subtitle">Masuk ke akun PustakaTanyoe Anda</p>
+
+      <form id="loginForm" onsubmit="handleLogin(event)" novalidate>
+        <div class="form-group">
+          <label class="form-label">Alamat Email <span class="required">*</span></label>
+          <div class="input-group">
+            <i class="fas fa-envelope input-icon"></i>
+            <input type="email" id="loginEmail" class="form-control" placeholder="email@usk.ac.id" autocomplete="email" required/>
+          </div>
+          <div class="form-error" id="emailError">Masukkan email yang valid.</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Password <span class="required">*</span></label>
+          <div class="input-group">
+            <i class="fas fa-lock input-icon"></i>
+            <input type="password" id="loginPassword" class="form-control" placeholder="Masukkan password" autocomplete="current-password" required/>
+            <i class="fas fa-eye input-icon-right" id="togglePwd" onclick="togglePassword()"></i>
+          </div>
+          <div class="form-error" id="passwordError">Password tidak boleh kosong.</div>
+        </div>
+
+        <div class="remember-forgot">
+          <label class="remember-label">
+            <input type="checkbox" id="rememberMe"> Ingat saya
+          </label>
+          <a href="#" class="forgot-link">Lupa password?</a>
+        </div>
+
+        <div class="form-error" id="loginError" style="display:none;padding:12px;background:var(--danger-50);border-radius:var(--radius-md);border:1px solid var(--danger-500);margin-bottom:16px;font-size:var(--text-sm);"></div>
+
+        <button type="submit" class="btn btn-primary w-full btn-lg" id="loginBtn">
+          <i class="fas fa-sign-in-alt"></i> Masuk
+        </button>
+      </form>
+
+      <div class="auth-divider">
+        <hr/><span>Atau coba dengan akun demo</span><hr/>
+      </div>
+
+      <div class="demo-cards">
+        <div class="demo-card" onclick="fillDemo('admin@usk.ac.id','admin123')">
+          <div class="demo-card-label"><i class="fas fa-shield-alt"></i> Admin</div>
+          <div class="demo-card-info">admin@usk.ac.id<br>Password: admin123</div>
+        </div>
+        <div class="demo-card" onclick="fillDemo('mahasiswa@usk.ac.id','user123')">
+          <div class="demo-card-label"><i class="fas fa-user-graduate"></i> Mahasiswa</div>
+          <div class="demo-card-info">mahasiswa@usk.ac.id<br>Password: user123</div>
+        </div>
+      </div>
+
+      <div class="auth-footer-link">
+        Belum punya akun? <a href="register.html">Daftar sekarang →</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toastContainer" class="toast-container"></div>
+
+<script src="js/patterns/singleton.js"></script>
+<script src="js/patterns/observer.js"></script>
+<script src="js/patterns/factory.js"></script>
+<script src="js/data/books.js"></script>
+<script src="js/data/users.js"></script>
+<script src="js/data/loans.js"></script>
+<script src="js/utils.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  initBookData(); initUserData(); initLoanData();
+  // Redirect if already logged in
+  const session = getCurrentSession();
+  if (session) {
+    window.location.href = session.role === 'admin' ? 'admin/dashboard.html' : 'user/dashboard.html';
+  }
+});
+
+function fillDemo(email, password) {
+  document.getElementById('loginEmail').value = email;
+  document.getElementById('loginPassword').value = password;
+}
+
+function togglePassword() {
+  const pwd = document.getElementById('loginPassword');
+  const icon = document.getElementById('togglePwd');
+  if (pwd.type === 'password') {
+    pwd.type = 'text';
+    icon.className = 'fas fa-eye-slash input-icon-right';
+  } else {
+    pwd.type = 'password';
+    icon.className = 'fas fa-eye input-icon-right';
+  }
+}
+
+function handleLogin(e) {
+  e.preventDefault();
+  const email = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  const btn = document.getElementById('loginBtn');
+  const errEl = document.getElementById('loginError');
+
+  errEl.style.display = 'none';
+  document.getElementById('emailError').classList.remove('show');
+  document.getElementById('passwordError').classList.remove('show');
+
+  let valid = true;
+  if (!email || !/\S+@\S+\.\S+/.test(email)) {
+    document.getElementById('emailError').classList.add('show');
+    document.getElementById('loginEmail').classList.add('error');
+    valid = false;
+  }
+  if (!password) {
+    document.getElementById('passwordError').classList.add('show');
+    document.getElementById('loginPassword').classList.add('error');
+    valid = false;
+  }
+  if (!valid) return;
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner spinner-sm"></span> Memproses...';
+
+  setTimeout(() => {
+    const result = loginUser(email, password);
+    if (result.success) {
+      showToast('success', 'Login Berhasil!', `Selamat datang, ${result.user.name.split(' ')[0]}!`);
+      setTimeout(() => {
+        window.location.href = result.user.role === 'admin' ? 'admin/dashboard.html' : 'user/dashboard.html';
+      }, 800);
+    } else {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Masuk';
+      errEl.textContent = result.message;
+      errEl.style.display = 'block';
+    }
+  }, 600);
+}
+</script>
+</body>
+</html>

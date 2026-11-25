@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Kelola Anggota — Admin PustakaTanyoe USK</title>
+  <link rel="stylesheet" href="../css/style.css"/>
+  <link rel="stylesheet" href="../css/animations.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+</head>
+<body>
+
+<div class="app-layout">
+  <aside class="sidebar" id="sidebar">
+    <a href="dashboard.html" class="sidebar-brand">
+      <img src="../assets/images/logo_usk_clean.png" alt="Logo USK" class="sidebar-logo-img" />
+      <div class="sidebar-brand-text">
+        <div class="site-name">PustakaTanyoe</div>
+        <div class="site-sub">Admin Control Center</div>
+      </div>
+    </a>
+    <div class="sidebar-nav">
+      <div class="sidebar-section-label">Manajemen Utama</div>
+      <a href="dashboard.html" class="sidebar-link"><span class="link-icon"><i class="fas fa-tachometer-alt"></i></span><span>Dashboard</span></a>
+      <a href="books.html" class="sidebar-link"><span class="link-icon"><i class="fas fa-book"></i></span><span>Kelola Buku</span></a>
+      <a href="loans.html" class="sidebar-link"><span class="link-icon"><i class="fas fa-clipboard-list"></i></span><span>Sirkulasi & Peminjaman</span></a>
+      <a href="members.html" class="sidebar-link active"><span class="link-icon"><i class="fas fa-users"></i></span><span>Kelola Anggota</span></a>
+      <div class="sidebar-section-label">Layanan & Keuangan</div>
+      <a href="fines.html" class="sidebar-link"><span class="link-icon"><i class="fas fa-money-bill-wave"></i></span><span>Kelola Denda</span></a>
+      <a href="categories.html" class="sidebar-link"><span class="link-icon"><i class="fas fa-tags"></i></span><span>Kategori Koleksi</span></a>
+      <a href="reports.html" class="sidebar-link"><span class="link-icon"><i class="fas fa-chart-line"></i></span><span>Laporan & Statistik</span></a>
+    </div>
+    <div class="sidebar-footer" id="sidebarUser"></div>
+  </aside>
+
+  <div class="app-content">
+    <header class="app-header">
+      <div class="flex items-center gap-3">
+        <button class="btn btn-ghost btn-icon" onclick="document.getElementById('sidebar').classList.toggle('mobile-open')"><i class="fas fa-bars"></i></button>
+        <h2 class="app-header-title">Keanggotaan Mahasiswa USK</h2>
+      </div>
+      <div class="app-header-actions">
+        <span class="badge badge-gold" id="pendingMembersCountBadge">0 Menunggu Aktivasi</span>
+      </div>
+    </header>
+
+    <main class="app-main">
+      <div class="card mb-6" style="padding: var(--space-4) var(--space-6);">
+        <div class="flex items-center justify-between gap-4 flex-wrap">
+          <div class="input-group" style="max-width: 400px; width: 100%;">
+            <i class="fas fa-search input-icon"></i>
+            <input type="text" id="memberSearch" class="form-control" placeholder="Cari nama, NIM, atau email mahasiswa..." onkeyup="renderMembersTable()"/>
+          </div>
+          <div>
+            <select class="form-control form-select" id="filterMemberStatus" onchange="renderMembersTable()">
+              <option value="all">Semua Status</option>
+              <option value="pending">Menunggu Verifikasi</option>
+              <option value="active">Aktif</option>
+              <option value="suspended">Ditangguhkan</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="table-wrapper">
+          <table class="table table-striped">
+            <thead>
+              <tr>
+                <th>Mahasiswa (NIM)</th>
+                <th>Email USK</th>
+                <th>Fakultas & Prodi</th>
+                <th>Status Anggota</th>
+                <th>Total Pinjam</th>
+                <th>Tunggakan Denda</th>
+                <th class="text-right">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="membersTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<div id="toastContainer" class="toast-container"></div>
+
+<!-- Scripts -->
+<script src="../js/patterns/singleton.js"></script>
+<script src="../js/patterns/observer.js"></script>
+<script src="../js/patterns/factory.js"></script>
+<script src="../js/data/books.js"></script>
+<script src="../js/data/users.js"></script>
+<script src="../js/data/loans.js"></script>
+<script src="../js/utils.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const session = requireAdmin('../login.html');
+  if (!session) return;
+  renderMembersTable();
+});
+
+function renderMembersTable() {
+  const q = document.getElementById('memberSearch').value.toLowerCase().trim();
+  const status = document.getElementById('filterMemberStatus').value;
+
+  let users = getUsers().filter(u => u.role === 'user');
+  const pendingCount = users.filter(u => u.memberStatus === 'pending').length;
+  document.getElementById('pendingMembersCountBadge').textContent = `${pendingCount} Menunggu Aktivasi`;
+
+  if (q) {
+    users = users.filter(u => u.name.toLowerCase().includes(q) || (u.studentId && u.studentId.includes(q)) || u.email.toLowerCase().includes(q));
+  }
+  if (status !== 'all') {
+    users = users.filter(u => u.memberStatus === status);
+  }
+
+  const tbody = document.getElementById('membersTableBody');
+  if (users.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="7" class="text-center py-6 text-muted">Data anggota tidak ditemukan.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = users.map(u => `
+    <tr>
+      <td>
+        <div class="font-semibold text-navy">${u.name}</div>
+        <div class="text-xs text-muted">NIM: ${u.studentId || '-'}</div>
+      </td>
+      <td class="text-sm">${u.email}</td>
+      <td class="text-sm">
+        <div>${u.faculty || '-'}</div>
+        <div class="text-xs text-muted">${u.major || '-'}</div>
+      </td>
+      <td>${getMemberStatusBadge(u.memberStatus)}</td>
+      <td class="font-semibold">${u.borrowCount || 0} buku</td>
+      <td class="font-semibold ${(u.totalFines || 0) > 0 ? 'text-danger' : 'text-muted'}">${formatCurrency(u.totalFines || 0)}</td>
+      <td class="text-right">
+        ${u.memberStatus === 'pending' ? `
+          <button class="btn btn-success btn-sm" onclick="setMemberStatus('${u.id}', 'active')"><i class="fas fa-check"></i> Aktivasi</button>` : ''}
+        ${u.memberStatus === 'active' ? `
+          <button class="btn btn-outline btn-sm text-danger" onclick="setMemberStatus('${u.id}', 'suspended')"><i class="fas fa-ban"></i> Tangguhkan</button>` : ''}
+        ${u.memberStatus === 'suspended' ? `
+          <button class="btn btn-outline-gold btn-sm" onclick="setMemberStatus('${u.id}', 'active')"><i class="fas fa-undo"></i> Pulihkan</button>` : ''}
+      </td>
+    </tr>`).join('');
+}
+
+function setMemberStatus(userId, newStatus) {
+  updateUser(userId, { memberStatus: newStatus });
+  showToast('success', 'Status Berubah', `Status anggota diperbarui menjadi: ${newStatus}`);
+  renderMembersTable();
+}
+</script>
+</body>
+</html>

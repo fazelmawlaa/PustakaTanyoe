@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Peminjaman Saya — PustakaTanyoe USK</title>
+  <link rel="stylesheet" href="../css/style.css"/>
+  <link rel="stylesheet" href="../css/animations.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+</head>
+<body class="bg-secondary">
+
+<!-- Navigation -->
+<nav class="navbar" id="navbar">
+  <div class="container navbar-inner">
+    <a href="dashboard.html" class="navbar-brand">
+      <img src="../assets/images/logo_pustaka_tanyoe_usk_clean.png" alt="Pustaka Tanyoe USK" class="navbar-brand-logo-img" />
+    </a>
+    <div class="navbar-nav">
+      <a href="dashboard.html" class="nav-link">Dashboard</a>
+      <a href="catalog.html" class="nav-link">Katalog Buku</a>
+      <a href="my-loans.html" class="nav-link active">Peminjaman Saya</a>
+      <a href="wishlist.html" class="nav-link">Wishlist</a>
+      <a href="notifications.html" class="nav-link">Notifikasi <span class="notif-badge notif-count" style="display:none;">0</span></a>
+      <a href="profile.html" class="nav-link">Profil Saya</a>
+    </div>
+    <div class="navbar-actions" id="navUserArea">
+      <div class="dropdown">
+        <button class="btn btn-ghost" data-dropdown-trigger style="display:flex;align-items:center;gap:8px;">
+          <div class="avatar avatar-sm" id="userAvatar">M</div>
+          <span class="text-sm font-semibold" id="userNameHeader">Mahasiswa</span>
+          <i class="fas fa-chevron-down text-xs text-muted"></i>
+        </button>
+        <div class="dropdown-menu">
+          <a class="dropdown-item" href="profile.html"><i class="fas fa-user-circle"></i> Profil Saya</a>
+          <a class="dropdown-item" href="my-loans.html"><i class="fas fa-book-reader"></i> Riwayat Pinjam</a>
+          <a class="dropdown-item" href="notifications.html"><i class="fas fa-bell"></i> Pemberitahuan</a>
+          <div class="dropdown-divider"></div>
+          <div class="dropdown-item text-danger" onclick="handleLogout()" style="cursor:pointer;">
+            <i class="fas fa-sign-out-alt"></i> Keluar
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="hamburger" id="hamburger">
+      <span></span><span></span><span></span>
+    </div>
+  </div>
+</nav>
+
+<div class="mobile-menu" id="mobileMenu">
+  <a href="dashboard.html" class="nav-link">Dashboard</a>
+  <a href="catalog.html" class="nav-link">Katalog Buku</a>
+  <a href="my-loans.html" class="nav-link active">Peminjaman Saya</a>
+  <a href="wishlist.html" class="nav-link">Wishlist</a>
+  <a href="notifications.html" class="nav-link">Notifikasi</a>
+  <a href="profile.html" class="nav-link">Profil Saya</a>
+  <button onclick="handleLogout()" class="btn btn-danger btn-sm w-full mt-2">Keluar</button>
+</div>
+
+<main style="padding-top: calc(var(--navbar-height) + var(--space-8)); padding-bottom: var(--space-16);">
+  <div class="container">
+    
+    <div class="flex items-center justify-between mb-6 flex-wrap gap-3">
+      <div>
+        <h1 style="font-family: var(--font-heading); font-size: var(--text-3xl); color: var(--navy-800); margin-bottom: 4px;">
+          Riwayat & Peminjaman Saya
+        </h1>
+        <p class="text-sm text-muted">Pantau status persetujuan, batas waktu jatuh tempo, dan perpanjangan online.</p>
+      </div>
+      <a href="catalog.html" class="btn btn-primary"><i class="fas fa-plus"></i> Pinjam Buku Lain</a>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <div class="tab-item active" onclick="switchTab('active', this)">Peminjaman Aktif & Menunggu</div>
+      <div class="tab-item" onclick="switchTab('history', this)">Riwayat Selesai</div>
+    </div>
+
+    <!-- Active Tab -->
+    <div class="tab-content active" id="tabActive">
+      <div class="card">
+        <div class="table-wrapper">
+          <table class="table table-striped">
+            <thead>
+              <tr>
+                <th>Judul Buku</th>
+                <th>Tanggal Pengajuan</th>
+                <th>Tgl Pinjam</th>
+                <th>Jatuh Tempo</th>
+                <th>Status</th>
+                <th>Denda</th>
+                <th class="text-right">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="activeLoansTableBody">
+              <!-- Dynamic -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- History Tab -->
+    <div class="tab-content" id="tabHistory">
+      <div class="card">
+        <div class="table-wrapper">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Judul Buku</th>
+                <th>Tanggal Pinjam</th>
+                <th>Tanggal Kembali</th>
+                <th>Denda Keterlambatan</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="historyLoansTableBody">
+              <!-- Dynamic -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<div id="toastContainer" class="toast-container"></div>
+
+<!-- Scripts -->
+<script src="../js/patterns/singleton.js"></script>
+<script src="../js/patterns/observer.js"></script>
+<script src="../js/patterns/factory.js"></script>
+<script src="../js/patterns/strategy.js"></script>
+<script src="../js/patterns/decorator.js"></script>
+<script src="../js/data/books.js"></script>
+<script src="../js/data/users.js"></script>
+<script src="../js/data/loans.js"></script>
+<script src="../js/utils.js"></script>
+<script>
+let currentUserId = null;
+
+document.addEventListener('DOMContentLoaded', () => {
+  const session = requireUser('../login.html');
+  if (!session) return;
+  currentUserId = session.userId;
+  loadUserLoans();
+});
+
+function switchTab(tab, el) {
+  document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  if (tab === 'active') document.getElementById('tabActive').classList.add('active');
+  else document.getElementById('tabHistory').classList.add('active');
+}
+
+function loadUserLoans() {
+  const loans = getLoansByUser(currentUserId);
+  const active = loans.filter(l => ['active', 'overdue', 'pending'].includes(l.status));
+  const history = loans.filter(l => ['returned', 'rejected'].includes(l.status));
+
+  // Active
+  const activeTbody = document.getElementById('activeLoansTableBody');
+  if (active.length === 0) {
+    activeTbody.innerHTML = `<tr><td colspan="7" class="text-center py-6 text-muted">Belum ada peminjaman aktif saat ini.</td></tr>`;
+  } else {
+    activeTbody.innerHTML = active.map(loan => {
+      const fine = calculateFine(loan);
+      const daysLeft = loan.dueDate ? getDaysLeft(loan.dueDate) : null;
+      let dueDateBadge = '-';
+      if (loan.dueDate) {
+        if (daysLeft < 0) dueDateBadge = `<span class="badge badge-red">${formatDateShort(loan.dueDate)} (Terlambat ${Math.abs(daysLeft)} hari)</span>`;
+        else if (daysLeft <= 2) dueDateBadge = `<span class="badge badge-yellow">${formatDateShort(loan.dueDate)} (${daysLeft} hari lagi)</span>`;
+        else dueDateBadge = `<span class="text-sm font-semibold">${formatDateShort(loan.dueDate)}</span>`;
+      }
+
+      return `
+        <tr>
+          <td>
+            <div class="font-semibold text-navy">${loan.bookTitle}</div>
+            <div class="text-xs text-muted">${loan.bookAuthor}</div>
+          </td>
+          <td>${formatDateShort(loan.requestDate || loan.borrowDate)}</td>
+          <td>${loan.borrowDate ? formatDateShort(loan.borrowDate) : '<span class="text-xs text-muted">Menunggu</span>'}</td>
+          <td>${dueDateBadge}</td>
+          <td>${getLoanStatusBadge(loan.status)}</td>
+          <td class="font-semibold ${fine > 0 ? 'text-danger' : 'text-muted'}">${fine > 0 ? formatCurrency(fine) : 'Rp 0'}</td>
+          <td class="text-right">
+            ${loan.status === 'active' ? `
+              <button class="btn btn-outline-gold btn-sm" onclick="renewLoan('${loan.id}')" title="Perpanjang 7 hari">
+                <i class="fas fa-redo-alt"></i> Perpanjang
+              </button>` : ''}
+            <a href="book-detail.html?id=${loan.bookId}" class="btn btn-ghost btn-sm"><i class="fas fa-eye"></i></a>
+          </td>
+        </tr>`;
+    }).join('');
+  }
+
+  // History
+  const historyTbody = document.getElementById('historyLoansTableBody');
+  if (history.length === 0) {
+    historyTbody.innerHTML = `<tr><td colspan="5" class="text-center py-6 text-muted">Belum ada riwayat peminjaman selesai.</td></tr>`;
+  } else {
+    historyTbody.innerHTML = history.map(loan => `
+      <tr>
+        <td>
+          <div class="font-semibold text-navy">${loan.bookTitle}</div>
+          <div class="text-xs text-muted">${loan.bookAuthor}</div>
+        </td>
+        <td>${formatDateShort(loan.borrowDate)}</td>
+        <td>${formatDateShort(loan.returnDate || loan.returnedAt)}</td>
+        <td class="font-semibold ${loan.fine > 0 ? 'text-danger' : ''}">${formatCurrency(loan.fine || 0)}</td>
+        <td>${getLoanStatusBadge(loan.status)}</td>
+      </tr>
+    `).join('');
+  }
+}
+
+function renewLoan(loanId) {
+  const loans = getLoans();
+  const idx = loans.findIndex(l => l.id === loanId);
+  if (idx === -1) return;
+
+  const loan = loans[idx];
+  if ((loan.renewalCount || 0) >= 2) {
+    showToast('warning', 'Batas Perpanjangan Tercapai', 'Buku hanya dapat diperpanjang maksimal 2 kali.');
+    return;
+  }
+
+  const currentDue = new Date(loan.dueDate);
+  currentDue.setDate(currentDue.getDate() + 7);
+  loan.dueDate = currentDue.toISOString();
+  loan.renewalCount = (loan.renewalCount || 0) + 1;
+
+  saveLoans(loans);
+  showToast('success', 'Perpanjangan Berhasil', `Batas pengembalian diperpanjang hingga ${formatDateShort(loan.dueDate)}.`);
+  notificationSystem.addNotification({
+    type: 'success',
+    title: 'Perpanjangan Berhasil',
+    message: `Peminjaman "${loan.bookTitle}" diperpanjang 7 hari.`,
+    userId: currentUserId,
+    bookId: loan.bookId
+  });
+  loadUserLoans();
+}
+</script>
+</body>
+</html>

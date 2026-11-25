@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Laporan & Statistik — Admin PustakaTanyoe USK</title>
+  <link rel="stylesheet" href="../css/style.css"/>
+  <link rel="stylesheet" href="../css/animations.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+<div class="app-layout">
+  <aside class="sidebar" id="sidebar">
+    <a href="dashboard.html" class="sidebar-brand">
+      <img src="../assets/images/logo_usk_clean.png" alt="Logo USK" class="sidebar-logo-img" />
+      <div class="sidebar-brand-text">
+        <div class="site-name">PustakaTanyoe</div>
+        <div class="site-sub">Admin Control Center</div>
+      </div>
+    </a>
+    <div class="sidebar-nav">
+      <div class="sidebar-section-label">Manajemen Utama</div>
+      <a href="dashboard.html" class="sidebar-link"><span class="link-icon"><i class="fas fa-tachometer-alt"></i></span><span>Dashboard</span></a>
+      <a href="books.html" class="sidebar-link"><span class="link-icon"><i class="fas fa-book"></i></span><span>Kelola Buku</span></a>
+      <a href="loans.html" class="sidebar-link"><span class="link-icon"><i class="fas fa-clipboard-list"></i></span><span>Sirkulasi & Peminjaman</span></a>
+      <a href="members.html" class="sidebar-link"><span class="link-icon"><i class="fas fa-users"></i></span><span>Kelola Anggota</span></a>
+      <div class="sidebar-section-label">Layanan & Keuangan</div>
+      <a href="fines.html" class="sidebar-link"><span class="link-icon"><i class="fas fa-money-bill-wave"></i></span><span>Kelola Denda</span></a>
+      <a href="categories.html" class="sidebar-link"><span class="link-icon"><i class="fas fa-tags"></i></span><span>Kategori Koleksi</span></a>
+      <a href="reports.html" class="sidebar-link active"><span class="link-icon"><i class="fas fa-chart-line"></i></span><span>Laporan & Statistik</span></a>
+    </div>
+    <div class="sidebar-footer" id="sidebarUser"></div>
+  </aside>
+
+  <div class="app-content">
+    <header class="app-header">
+      <div class="flex items-center gap-3">
+        <button class="btn btn-ghost btn-icon" onclick="document.getElementById('sidebar').classList.toggle('mobile-open')"><i class="fas fa-bars"></i></button>
+        <h2 class="app-header-title">Analisis Kinerja & Laporan Perpustakaan</h2>
+      </div>
+      <div class="app-header-actions">
+        <button class="btn btn-outline btn-sm" onclick="window.print()"><i class="fas fa-print"></i> Cetak Laporan</button>
+      </div>
+    </header>
+
+    <main class="app-main">
+      <div class="card mb-8">
+        <div class="card-header">
+          <h4 class="card-title" style="font-size: var(--text-base);"><i class="fas fa-medal text-gold"></i> 10 Buku Paling Banyak Dipinjam (Top Borrowed)</h4>
+        </div>
+        <div class="card-body">
+          <div class="chart-container" style="height: 300px;">
+            <canvas id="topBooksChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-2 gap-6 mb-8">
+        <div class="card">
+          <div class="card-header">
+            <h4 class="card-title" style="font-size: var(--text-base);"><i class="fas fa-university text-gold"></i> Peminjaman per Fakultas</h4>
+          </div>
+          <div class="card-body">
+            <div class="chart-container" style="height: 250px;">
+              <canvas id="facultyLoansChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h4 class="card-title" style="font-size: var(--text-base);"><i class="fas fa-clipboard-check text-gold"></i> Status Sirkulasi Global</h4>
+          </div>
+          <div class="card-body">
+            <div class="chart-container" style="height: 250px;">
+              <canvas id="loanStatusChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- Scripts -->
+<script src="../js/patterns/singleton.js"></script>
+<script src="../js/patterns/observer.js"></script>
+<script src="../js/patterns/factory.js"></script>
+<script src="../js/data/books.js"></script>
+<script src="../js/data/users.js"></script>
+<script src="../js/data/loans.js"></script>
+<script src="../js/utils.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const session = requireAdmin('../login.html');
+  if (!session) return;
+  initReportCharts();
+});
+
+function initReportCharts() {
+  const books = getBooks().sort((a,b) => (b.borrowCount||0) - (a.borrowCount||0)).slice(0, 8);
+
+  // Top books bar
+  new Chart(document.getElementById('topBooksChart').getContext('2d'), {
+    type: 'bar',
+    data: {
+      labels: books.map(b => b.title.slice(0, 20) + '...'),
+      datasets: [{
+        label: 'Frekuensi Dipinjam',
+        data: books.map(b => b.borrowCount || 10),
+        backgroundColor: '#C9A227',
+        borderRadius: 6
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: { y: { beginAtZero: true } }
+    }
+  });
+
+  // Faculty pie
+  new Chart(document.getElementById('facultyLoansChart').getContext('2d'), {
+    type: 'pie',
+    data: {
+      labels: ['MIPA', 'Teknik', 'Kedokteran', 'Hukum', 'Ekonomi', 'Lainnya'],
+      datasets: [{
+        data: [35, 25, 15, 12, 8, 5],
+        backgroundColor: ['#1B2B4B', '#C9A227', '#1A472A', '#3B82F6', '#EF4444', '#9CA3AF']
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { position: 'right' } }
+    }
+  });
+
+  // Loan status polar
+  const loans = getLoans();
+  const statusCounts = { active: 0, returned: 0, overdue: 0, pending: 0 };
+  loans.forEach(l => { statusCounts[l.status] = (statusCounts[l.status] || 0) + 1; });
+
+  new Chart(document.getElementById('loanStatusChart').getContext('2d'), {
+    type: 'doughnut',
+    data: {
+      labels: ['Aktif Dipinjam', 'Selesai Kembali', 'Terlambat Denda', 'Pending'],
+      datasets: [{
+        data: [statusCounts.active, statusCounts.returned, statusCounts.overdue, statusCounts.pending],
+        backgroundColor: ['#3B82F6', '#10B981', '#EF4444', '#F59E0B']
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { position: 'right' } }
+    }
+  });
+}
+</script>
+</body>
+</html>

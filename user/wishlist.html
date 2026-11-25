@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Wishlist Buku Saya — PustakaTanyoe USK</title>
+  <link rel="stylesheet" href="../css/style.css"/>
+  <link rel="stylesheet" href="../css/animations.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+</head>
+<body class="bg-secondary">
+
+<!-- Navigation -->
+<nav class="navbar" id="navbar">
+  <div class="container navbar-inner">
+    <a href="dashboard.html" class="navbar-brand">
+      <img src="../assets/images/logo_pustaka_tanyoe_usk_clean.png" alt="Pustaka Tanyoe USK" class="navbar-brand-logo-img" />
+    </a>
+    <div class="navbar-nav">
+      <a href="dashboard.html" class="nav-link">Dashboard</a>
+      <a href="catalog.html" class="nav-link">Katalog Buku</a>
+      <a href="my-loans.html" class="nav-link">Peminjaman Saya</a>
+      <a href="wishlist.html" class="nav-link active">Wishlist</a>
+      <a href="notifications.html" class="nav-link">Notifikasi <span class="notif-badge notif-count" style="display:none;">0</span></a>
+      <a href="profile.html" class="nav-link">Profil Saya</a>
+    </div>
+    <div class="navbar-actions" id="navUserArea">
+      <div class="dropdown">
+        <button class="btn btn-ghost" data-dropdown-trigger style="display:flex;align-items:center;gap:8px;">
+          <div class="avatar avatar-sm" id="userAvatar">M</div>
+          <span class="text-sm font-semibold" id="userNameHeader">Mahasiswa</span>
+          <i class="fas fa-chevron-down text-xs text-muted"></i>
+        </button>
+        <div class="dropdown-menu">
+          <a class="dropdown-item" href="profile.html"><i class="fas fa-user-circle"></i> Profil Saya</a>
+          <a class="dropdown-item" href="my-loans.html"><i class="fas fa-book-reader"></i> Riwayat Pinjam</a>
+          <a class="dropdown-item" href="notifications.html"><i class="fas fa-bell"></i> Pemberitahuan</a>
+          <div class="dropdown-divider"></div>
+          <div class="dropdown-item text-danger" onclick="handleLogout()" style="cursor:pointer;">
+            <i class="fas fa-sign-out-alt"></i> Keluar
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="hamburger" id="hamburger">
+      <span></span><span></span><span></span>
+    </div>
+  </div>
+</nav>
+
+<div class="mobile-menu" id="mobileMenu">
+  <a href="dashboard.html" class="nav-link">Dashboard</a>
+  <a href="catalog.html" class="nav-link">Katalog Buku</a>
+  <a href="my-loans.html" class="nav-link">Peminjaman Saya</a>
+  <a href="wishlist.html" class="nav-link active">Wishlist</a>
+  <a href="notifications.html" class="nav-link">Notifikasi</a>
+  <a href="profile.html" class="nav-link">Profil Saya</a>
+  <button onclick="handleLogout()" class="btn btn-danger btn-sm w-full mt-2">Keluar</button>
+</div>
+
+<main style="padding-top: calc(var(--navbar-height) + var(--space-8)); padding-bottom: var(--space-16);">
+  <div class="container">
+    
+    <div class="flex items-center justify-between mb-8 flex-wrap gap-4">
+      <div>
+        <h1 style="font-family: var(--font-heading); font-size: var(--text-3xl); color: var(--navy-800); margin-bottom: 4px;">
+          Buku yang Disimpan (Wishlist)
+        </h1>
+        <p class="text-sm text-muted">Daftar buku rencana bacaan yang Anda tandai untuk dipinjam nanti.</p>
+      </div>
+      <div class="badge badge-gold" id="wishlistCountBadge" style="font-size:0.875rem; padding: 6px 14px;">
+        0 Buku
+      </div>
+    </div>
+
+    <!-- Wishlist Grid -->
+    <div class="books-grid" id="wishlistBooksGrid">
+      <!-- Dynamic cards -->
+    </div>
+
+  </div>
+</main>
+
+<div id="toastContainer" class="toast-container"></div>
+
+<!-- Scripts -->
+<script src="../js/patterns/singleton.js"></script>
+<script src="../js/patterns/observer.js"></script>
+<script src="../js/patterns/factory.js"></script>
+<script src="../js/patterns/strategy.js"></script>
+<script src="../js/patterns/decorator.js"></script>
+<script src="../js/data/books.js"></script>
+<script src="../js/data/users.js"></script>
+<script src="../js/data/loans.js"></script>
+<script src="../js/utils.js"></script>
+<script>
+let currentUser = null;
+
+document.addEventListener('DOMContentLoaded', () => {
+  const session = requireUser('../login.html');
+  if (!session) return;
+  currentUser = getUserById(session.userId);
+  renderWishlist();
+});
+
+function renderWishlist() {
+  if (!currentUser) return;
+  const wishlistIds = currentUser.wishlist || [];
+  document.getElementById('wishlistCountBadge').textContent = `${wishlistIds.length} Buku Tersimpan`;
+
+  const allBooks = getBooks();
+  const wishBooks = allBooks.filter(b => wishlistIds.includes(b.id));
+
+  const grid = document.getElementById('wishlistBooksGrid');
+  if (wishBooks.length === 0) {
+    grid.innerHTML = `
+      <div class="empty-state" style="grid-column: 1 / -1;">
+        <i class="far fa-bookmark empty-state-icon"></i>
+        <h3 class="empty-state-title">Wishlist Anda Masih Kosong</h3>
+        <p class="empty-state-desc">Jelajahi katalog perpustakaan dan klik ikon bookmark pada buku yang ingin Anda simpan.</p>
+        <a href="catalog.html" class="btn btn-primary btn-sm"><i class="fas fa-search"></i> Buka Katalog Buku</a>
+      </div>`;
+    return;
+  }
+
+  grid.innerHTML = wishBooks.map(b => {
+    const avail = (b.stock - (b.borrowed || 0)) > 0;
+    return `
+      <div class="book-card card-hover animate-fadeInUp">
+        <a href="book-detail.html?id=${b.id}">
+          ${renderBookCover(b)}
+        </a>
+        <div class="book-info">
+          <div class="book-category">${b.category}</div>
+          <a href="book-detail.html?id=${b.id}"><h4 class="book-title">${b.title}</h4></a>
+          <div class="book-author">${b.author}</div>
+          ${renderStars(b.rating)}
+          <div class="book-actions mt-3">
+            <a href="book-detail.html?id=${b.id}" class="btn btn-primary btn-sm flex-1">
+              <i class="fas fa-eye"></i> Detail
+            </a>
+            <button class="btn btn-outline btn-sm btn-icon text-danger" onclick="removeFromWishlist('${b.id}')" title="Hapus dari Wishlist">
+              <i class="fas fa-trash-alt"></i>
+            </button>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function removeFromWishlist(bookId) {
+  currentUser.wishlist = (currentUser.wishlist || []).filter(id => id !== bookId);
+  updateUser(currentUser.id, { wishlist: currentUser.wishlist });
+  showToast('info', 'Dihapus dari Wishlist');
+  renderWishlist();
+}
+</script>
+</body>
+</html>

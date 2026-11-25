@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Kelola Buku — Admin PustakaTanyoe USK</title>
+  <link rel="stylesheet" href="../css/style.css"/>
+  <link rel="stylesheet" href="../css/animations.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+</head>
+<body>
+
+<div class="app-layout">
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <a href="dashboard.html" class="sidebar-brand">
+      <img src="../assets/images/logo_usk_clean.png" alt="Logo USK" class="sidebar-logo-img" />
+      <div class="sidebar-brand-text">
+        <div class="site-name">PustakaTanyoe</div>
+        <div class="site-sub">Admin Control Center</div>
+      </div>
+    </a>
+    <div class="sidebar-nav">
+      <div class="sidebar-section-label">Manajemen Utama</div>
+      <a href="dashboard.html" class="sidebar-link">
+        <span class="link-icon"><i class="fas fa-tachometer-alt"></i></span>
+        <span>Dashboard</span>
+      </a>
+      <a href="books.html" class="sidebar-link active">
+        <span class="link-icon"><i class="fas fa-book"></i></span>
+        <span>Kelola Buku</span>
+      </a>
+      <a href="loans.html" class="sidebar-link">
+        <span class="link-icon"><i class="fas fa-clipboard-list"></i></span>
+        <span>Sirkulasi & Peminjaman</span>
+      </a>
+      <a href="members.html" class="sidebar-link">
+        <span class="link-icon"><i class="fas fa-users"></i></span>
+        <span>Kelola Anggota</span>
+      </a>
+      <div class="sidebar-section-label">Layanan & Keuangan</div>
+      <a href="fines.html" class="sidebar-link">
+        <span class="link-icon"><i class="fas fa-money-bill-wave"></i></span>
+        <span>Kelola Denda</span>
+      </a>
+      <a href="categories.html" class="sidebar-link">
+        <span class="link-icon"><i class="fas fa-tags"></i></span>
+        <span>Kategori Koleksi</span>
+      </a>
+      <a href="reports.html" class="sidebar-link">
+        <span class="link-icon"><i class="fas fa-chart-line"></i></span>
+        <span>Laporan & Statistik</span>
+      </a>
+    </div>
+    <div class="sidebar-footer" id="sidebarUser"></div>
+  </aside>
+
+  <!-- App Content -->
+  <div class="app-content">
+    <header class="app-header">
+      <div class="flex items-center gap-3">
+        <button class="btn btn-ghost btn-icon" onclick="document.getElementById('sidebar').classList.toggle('mobile-open')">
+          <i class="fas fa-bars"></i>
+        </button>
+        <h2 class="app-header-title">Master Data Buku Perpustakaan</h2>
+      </div>
+      <div class="app-header-actions">
+        <button class="btn btn-primary btn-sm" onclick="openAddBookModal()">
+          <i class="fas fa-plus"></i> Tambah Buku Baru
+        </button>
+      </div>
+    </header>
+
+    <main class="app-main">
+      <!-- Search & Filters -->
+      <div class="card mb-6" style="padding: var(--space-4) var(--space-6);">
+        <div class="flex items-center justify-between gap-4 flex-wrap">
+          <div class="input-group" style="max-width: 400px; width: 100%;">
+            <i class="fas fa-search input-icon"></i>
+            <input type="text" id="adminBookSearch" class="form-control" placeholder="Cari judul, penulis, atau ISBN..." onkeyup="renderBooksTable()"/>
+          </div>
+          <div class="flex items-center gap-3">
+            <select class="form-control form-select" id="filterCategory" onchange="renderBooksTable()" style="min-width: 180px;">
+              <option value="">Semua Kategori</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Books Table -->
+      <div class="card">
+        <div class="table-wrapper">
+          <table class="table table-striped">
+            <thead>
+              <tr>
+                <th>Judul & Penulis</th>
+                <th>ISBN</th>
+                <th>Kategori</th>
+                <th>Tahun</th>
+                <th>Total Stok</th>
+                <th>Dipinjam</th>
+                <th>Tersedia</th>
+                <th class="text-right">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="booksTableBody">
+              <!-- Dynamic -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- Add / Edit Book Modal -->
+<div class="modal-overlay" id="bookModal">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <h3 class="modal-title" id="bookModalTitle"><i class="fas fa-book text-gold"></i> Tambah Buku Baru</h3>
+      <button class="modal-close" data-modal-close>&times;</button>
+    </div>
+    <div class="modal-body">
+      <form id="bookForm" onsubmit="saveBookData(event)">
+        <input type="hidden" id="bookFormId"/>
+        
+        <div class="form-group">
+          <label class="form-label">Judul Buku <span class="required">*</span></label>
+          <input type="text" id="formTitle" class="form-control" required/>
+        </div>
+
+        <div class="grid grid-2 gap-4">
+          <div class="form-group">
+            <label class="form-label">Nama Pengarang / Penulis <span class="required">*</span></label>
+            <input type="text" id="formAuthor" class="form-control" required/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Nomor ISBN <span class="required">*</span></label>
+            <input type="text" id="formISBN" class="form-control" placeholder="978-xxx-xxx-xxx-x" required/>
+          </div>
+        </div>
+
+        <div class="grid grid-3 gap-4">
+          <div class="form-group">
+            <label class="form-label">Kategori Bidang <span class="required">*</span></label>
+            <select id="formCategory" class="form-control form-select" required></select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Tahun Terbit <span class="required">*</span></label>
+            <input type="number" id="formYear" class="form-control" min="1900" max="2026" required/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Jumlah Eksemplar (Stok) <span class="required">*</span></label>
+            <input type="number" id="formStock" class="form-control" min="1" max="100" required/>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Nama Penerbit</label>
+          <input type="text" id="formPublisher" class="form-control"/>
+        </div>
+
+        <!-- Cover Image Upload Field -->
+        <div class="form-group">
+          <label class="form-label">Sampul / Foto Buku (Cover)</label>
+          <div style="display:flex; gap: var(--space-4); align-items:flex-start; flex-wrap:wrap; background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: var(--radius-lg); padding: var(--space-4);">
+            
+            <!-- Book Cover Preview Box -->
+            <div id="coverPreviewContainer" style="width: 100px; height: 135px; border-radius: var(--radius-md); overflow: hidden; border: 2px dashed var(--gold-300); background: white; display: flex; flex-direction:column; align-items: center; justify-content: center; position: relative; flex-shrink: 0; box-shadow: var(--shadow-sm);">
+              <div id="coverPlaceholderText" style="text-align: center; color: var(--gray-400); font-size: 0.75rem; padding: 6px; display:flex; flex-direction:column; align-items:center;">
+                <i class="fas fa-image" style="font-size: 1.8rem; margin-bottom: 6px; color: var(--gold-400);"></i>
+                <span>Belum ada sampul</span>
+              </div>
+              <img id="coverPreviewImg" src="" alt="Preview Sampul" style="display:none; width: 100%; height: 100%; object-fit: cover;" onerror="this.style.display='none'; document.getElementById('coverPlaceholderText').style.display='flex';" />
+            </div>
+
+            <!-- Upload Controls -->
+            <div style="flex: 1; min-width: 240px;">
+              <input type="hidden" id="formCoverImage" />
+              <input type="file" id="coverFileInput" accept="image/png, image/jpeg, image/webp" style="display:none;" onchange="handleCoverFileSelect(event)" />
+              
+              <div class="flex gap-2 mb-2 flex-wrap items-center">
+                <button type="button" class="btn btn-outline-gold btn-sm" onclick="document.getElementById('coverFileInput').click()">
+                  <i class="fas fa-upload"></i> Unggah Gambar
+                </button>
+                <button type="button" class="btn btn-ghost btn-sm text-danger" id="btnRemoveCover" onclick="handleRemoveCover()" style="display:none;">
+                  <i class="fas fa-trash-alt"></i> Hapus Sampul
+                </button>
+              </div>
+
+              <div class="text-xs text-muted mb-3">
+                Mendukung file: <strong>PNG, JPG, atau WebP</strong> (Disarankan rasio 3:4, ukuran maks. 3 MB).
+              </div>
+
+              <!-- URL Input Option -->
+              <div>
+                <label class="form-label" style="font-size: 0.75rem; color: var(--gray-600); margin-bottom: 3px;">Atau gunakan URL gambar online:</label>
+                <input type="url" id="formCoverUrlInput" class="form-control" style="font-size: 0.8rem; padding: 6px 10px;" placeholder="https://example.com/cover-buku.jpg" oninput="handleCoverUrlInput(event)" />
+              </div>
+
+            </div>
+
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Sinopsis / Ringkasan Buku</label>
+          <textarea id="formDescription" class="form-control" rows="3"></textarea>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-ghost" data-modal-close>Batal</button>
+          <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Simpan Koleksi</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div id="toastContainer" class="toast-container"></div>
+
+<!-- Scripts -->
+<script src="../js/patterns/singleton.js"></script>
+<script src="../js/patterns/observer.js"></script>
+<script src="../js/patterns/factory.js"></script>
+<script src="../js/patterns/strategy.js"></script>
+<script src="../js/patterns/decorator.js"></script>
+<script src="../js/data/books.js"></script>
+<script src="../js/data/users.js"></script>
+<script src="../js/data/loans.js"></script>
+<script src="../js/utils.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const session = requireAdmin('../login.html');
+  if (!session) return;
+
+  initCategoriesSelect();
+  renderBooksTable();
+});
+
+function initCategoriesSelect() {
+  const config = LibraryConfig.getInstance();
+  const cats = config.get('categories') || [];
+  const filterSel = document.getElementById('filterCategory');
+  const formSel = document.getElementById('formCategory');
+
+  cats.forEach(c => {
+    filterSel.innerHTML += `<option value="${c}">${c}</option>`;
+    formSel.innerHTML += `<option value="${c}">${c}</option>`;
+  });
+}
+
+function renderBooksTable() {
+  const query = document.getElementById('adminBookSearch').value.toLowerCase().trim();
+  const cat = document.getElementById('filterCategory').value;
+  let books = getBooks();
+
+  if (query) {
+    books = books.filter(b => b.title.toLowerCase().includes(query) || b.author.toLowerCase().includes(query) || b.isbn.includes(query));
+  }
+  if (cat) {
+    books = books.filter(b => b.category === cat);
+  }
+
+  const tbody = document.getElementById('booksTableBody');
+  if (books.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="8" class="text-center py-6 text-muted">Buku tidak ditemukan.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = books.map(b => {
+    const avail = (b.stock || 0) - (b.borrowed || 0);
+    const coverSrc = getBookCoverSrc(b);
+    return `
+      <tr>
+        <td>
+          <div style="display:flex; align-items:center; gap: 12px;">
+            <div style="width: 38px; height: 50px; border-radius: 4px; overflow:hidden; background: var(--gray-200); flex-shrink:0; box-shadow: 0 1px 3px rgba(0,0,0,0.12); position:relative;">
+              <img src="${coverSrc}" alt="${b.title}" style="width:100%; height:100%; object-fit:cover;" onerror="this.src='../assets/images/covers/bk001.svg';" />
+            </div>
+            <div>
+              <div class="font-semibold text-navy">${b.title}</div>
+              <div class="text-xs text-muted">${b.author}</div>
+            </div>
+          </div>
+        </td>
+        <td class="font-mono text-xs">${b.isbn}</td>
+        <td><span class="badge badge-gold">${b.category}</span></td>
+        <td>${b.year}</td>
+        <td class="font-semibold">${b.stock}</td>
+        <td class="text-warning font-semibold">${b.borrowed || 0}</td>
+        <td><span class="badge ${avail > 0 ? 'badge-green' : 'badge-red'}">${avail}</span></td>
+        <td class="text-right">
+          <button class="btn btn-ghost btn-sm btn-icon" onclick="openEditBookModal('${b.id}')" title="Edit"><i class="fas fa-edit text-gold"></i></button>
+          <button class="btn btn-ghost btn-sm btn-icon text-danger" onclick="handleDeleteBook('${b.id}')" title="Hapus"><i class="fas fa-trash-alt"></i></button>
+        </td>
+      </tr>`;
+  }).join('');
+}
+
+function handleCoverFileSelect(event) {
+  const file = event.target.files && event.target.files[0];
+  if (!file) return;
+
+  if (!file.type.startsWith('image/')) {
+    showToast('error', 'Format Tidak Didukung', 'Silakan pilih file gambar (JPG, PNG, atau WebP).');
+    return;
+  }
+
+  // Kompresi gambar via canvas agar ringan dan tersimpan sempurna di localStorage (<50 KB)
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const img = new Image();
+    img.onload = function() {
+      const maxW = 400;
+      const maxH = 550;
+      let w = img.width;
+      let h = img.height;
+      if (w > maxW || h > maxH) {
+        const ratio = Math.min(maxW / w, maxH / h);
+        w = Math.round(w * ratio);
+        h = Math.round(h * ratio);
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, w, h);
+      const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.85);
+
+      setCoverPreview(compressedDataUrl);
+      document.getElementById('formCoverImage').value = compressedDataUrl;
+      document.getElementById('formCoverUrlInput').value = '';
+      showToast('success', 'Gambar Dipilih', 'Sampul buku siap disimpan.');
+    };
+    img.onerror = function() {
+      setCoverPreview(e.target.result);
+      document.getElementById('formCoverImage').value = e.target.result;
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function handleCoverUrlInput(event) {
+  const url = event.target.value.trim();
+  if (url) {
+    document.getElementById('formCoverImage').value = url;
+    setCoverPreview(url);
+  } else {
+    handleRemoveCover();
+  }
+}
+
+function setCoverPreview(src) {
+  const img = document.getElementById('coverPreviewImg');
+  const placeholder = document.getElementById('coverPlaceholderText');
+  const btnRemove = document.getElementById('btnRemoveCover');
+
+  if (src) {
+    img.src = src;
+    img.style.display = 'block';
+    placeholder.style.display = 'none';
+    btnRemove.style.display = 'inline-flex';
+  } else {
+    img.src = '';
+    img.style.display = 'none';
+    placeholder.style.display = 'flex';
+    btnRemove.style.display = 'none';
+  }
+}
+
+function handleRemoveCover() {
+  document.getElementById('formCoverImage').value = '';
+  document.getElementById('formCoverUrlInput').value = '';
+  const fileInput = document.getElementById('coverFileInput');
+  if (fileInput) fileInput.value = '';
+  setCoverPreview('');
+}
+
+function openAddBookModal() {
+  document.getElementById('bookFormId').value = '';
+  document.getElementById('bookForm').reset();
+  handleRemoveCover();
+  document.getElementById('bookModalTitle').innerHTML = '<i class="fas fa-plus-circle text-gold"></i> Tambah Buku Baru';
+  openModal('bookModal');
+}
+
+function openEditBookModal(bookId) {
+  const b = getBookById(bookId);
+  if (!b) return;
+
+  document.getElementById('bookFormId').value = b.id;
+  document.getElementById('formTitle').value = b.title;
+  document.getElementById('formAuthor').value = b.author;
+  document.getElementById('formISBN').value = b.isbn;
+  document.getElementById('formCategory').value = b.category;
+  document.getElementById('formYear').value = b.year;
+  document.getElementById('formStock').value = b.stock;
+  document.getElementById('formPublisher').value = b.publisher || '';
+  document.getElementById('formDescription').value = b.description || '';
+
+  // Cover preview
+  const cover = b.coverImage || '';
+  document.getElementById('formCoverImage').value = cover;
+  if (cover.startsWith('http')) {
+    document.getElementById('formCoverUrlInput').value = cover;
+  } else {
+    document.getElementById('formCoverUrlInput').value = '';
+  }
+  setCoverPreview(cover ? getBookCoverSrc(b) : '');
+
+  document.getElementById('bookModalTitle').innerHTML = '<i class="fas fa-edit text-gold"></i> Edit Data Buku';
+  openModal('bookModal');
+}
+
+function saveBookData(e) {
+  e.preventDefault();
+  const id = document.getElementById('bookFormId').value;
+  const bookData = {
+    title: document.getElementById('formTitle').value.trim(),
+    author: document.getElementById('formAuthor').value.trim(),
+    isbn: document.getElementById('formISBN').value.trim(),
+    category: document.getElementById('formCategory').value,
+    year: parseInt(document.getElementById('formYear').value),
+    stock: parseInt(document.getElementById('formStock').value),
+    publisher: document.getElementById('formPublisher').value.trim(),
+    description: document.getElementById('formDescription').value.trim(),
+    coverImage: document.getElementById('formCoverImage').value || null,
+  };
+
+  if (id) {
+    updateBook(id, bookData);
+    showToast('success', 'Buku Diperbarui', `Data "${bookData.title}" berhasil diubah.`);
+  } else {
+    addBook(bookData);
+    showToast('success', 'Buku Ditambahkan', `"${bookData.title}" berhasil masuk katalog.`);
+  }
+
+  closeModal('bookModal');
+  renderBooksTable();
+}
+
+function handleDeleteBook(bookId) {
+  if (confirm('Apakah Anda yakin ingin menghapus buku ini dari katalog perpustakaan?')) {
+    deleteBook(bookId);
+    showToast('info', 'Buku Dihapus', 'Buku berhasil dihapus dari sistem.');
+    renderBooksTable();
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Profil Mahasiswa — PustakaTanyoe USK</title>
+  <link rel="stylesheet" href="../css/style.css"/>
+  <link rel="stylesheet" href="../css/animations.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+</head>
+<body class="bg-secondary">
+
+<!-- Navigation -->
+<nav class="navbar" id="navbar">
+  <div class="container navbar-inner">
+    <a href="dashboard.html" class="navbar-brand">
+      <img src="../assets/images/logo_pustaka_tanyoe_usk_clean.png" alt="Pustaka Tanyoe USK" class="navbar-brand-logo-img" />
+    </a>
+    <div class="navbar-nav">
+      <a href="dashboard.html" class="nav-link">Dashboard</a>
+      <a href="catalog.html" class="nav-link">Katalog Buku</a>
+      <a href="my-loans.html" class="nav-link">Peminjaman Saya</a>
+      <a href="wishlist.html" class="nav-link">Wishlist</a>
+      <a href="notifications.html" class="nav-link">Notifikasi <span class="notif-badge notif-count" style="display:none;">0</span></a>
+      <a href="profile.html" class="nav-link active">Profil Saya</a>
+    </div>
+    <div class="navbar-actions" id="navUserArea">
+      <div class="dropdown">
+        <button class="btn btn-ghost" data-dropdown-trigger style="display:flex;align-items:center;gap:8px;">
+          <div class="avatar avatar-sm" id="userAvatar">M</div>
+          <span class="text-sm font-semibold" id="userNameHeader">Mahasiswa</span>
+          <i class="fas fa-chevron-down text-xs text-muted"></i>
+        </button>
+        <div class="dropdown-menu">
+          <a class="dropdown-item" href="profile.html"><i class="fas fa-user-circle"></i> Profil Saya</a>
+          <a class="dropdown-item" href="my-loans.html"><i class="fas fa-book-reader"></i> Riwayat Pinjam</a>
+          <a class="dropdown-item" href="notifications.html"><i class="fas fa-bell"></i> Pemberitahuan</a>
+          <div class="dropdown-divider"></div>
+          <div class="dropdown-item text-danger" onclick="handleLogout()" style="cursor:pointer;">
+            <i class="fas fa-sign-out-alt"></i> Keluar
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="hamburger" id="hamburger">
+      <span></span><span></span><span></span>
+    </div>
+  </div>
+</nav>
+
+<div class="mobile-menu" id="mobileMenu">
+  <a href="dashboard.html" class="nav-link">Dashboard</a>
+  <a href="catalog.html" class="nav-link">Katalog Buku</a>
+  <a href="my-loans.html" class="nav-link">Peminjaman Saya</a>
+  <a href="wishlist.html" class="nav-link">Wishlist</a>
+  <a href="notifications.html" class="nav-link">Notifikasi</a>
+  <a href="profile.html" class="nav-link active">Profil Saya</a>
+  <button onclick="handleLogout()" class="btn btn-danger btn-sm w-full mt-2">Keluar</button>
+</div>
+
+<main style="padding-top: calc(var(--navbar-height) + var(--space-8)); padding-bottom: var(--space-16);">
+  <div class="container" style="max-width: 800px;">
+    
+    <!-- User Header Card with Avatar Upload -->
+    <div class="card mb-6 animate-fadeInUp">
+      <div class="card-body p-8 flex items-center gap-6 flex-wrap">
+        
+        <!-- Avatar with Edit Badge -->
+        <div class="avatar-upload-wrapper">
+          <div class="avatar avatar-2xl" id="profileAvatarBig" style="box-shadow: var(--shadow-md); border: 3px solid white;">
+            M
+          </div>
+          <label for="avatarFileInput" class="avatar-edit-badge" title="Ubah / Unggah Foto Profil">
+            <i class="fas fa-camera"></i>
+          </label>
+          <input type="file" id="avatarFileInput" accept="image/png, image/jpeg, image/webp" style="display:none;" onchange="handleAvatarFileSelect(event)"/>
+        </div>
+
+        <div class="flex-1">
+          <div class="flex items-center gap-3 flex-wrap">
+            <h2 id="profileNameBig" style="font-family:var(--font-heading); font-size:var(--text-2xl); color:var(--navy-800); margin-bottom:4px;">Nama Mahasiswa</h2>
+            <span class="badge badge-green" id="profileStatusBadge">Aktif</span>
+          </div>
+          <div class="text-sm text-muted" id="profileFacultyMajor">Fakultas MIPA • Informatika</div>
+          <div class="text-xs text-muted mt-1"><i class="fas fa-id-card"></i> NIM: <span id="profileNIMBig">2108107010001</span></div>
+          
+          <!-- Avatar Action Buttons -->
+          <div class="mt-4 flex gap-2 flex-wrap items-center">
+            <button type="button" class="btn btn-outline-gold btn-xs" onclick="document.getElementById('avatarFileInput').click()">
+              <i class="fas fa-camera"></i> Ganti Foto Profil
+            </button>
+            <button type="button" class="btn btn-ghost btn-xs text-danger" id="btnRemoveAvatar" onclick="handleRemoveAvatar()" style="display:none;">
+              <i class="fas fa-trash-alt"></i> Hapus Foto
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Edit Form Card -->
+    <div class="card animate-fadeInUp delay-100">
+      <div class="card-header">
+        <h3 class="card-title" style="font-size:var(--text-lg);"><i class="fas fa-user-edit text-gold"></i> Pengaturan Data Diri</h3>
+      </div>
+      <div class="card-body">
+        <form id="profileForm" onsubmit="handleSaveProfile(event)">
+          <div class="grid grid-2 gap-4">
+            <div class="form-group">
+              <label class="form-label">Nama Lengkap</label>
+              <input type="text" id="profName" class="form-control" required/>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Email Akun (USK)</label>
+              <input type="email" id="profEmail" class="form-control" disabled style="background:var(--gray-100); cursor:not-allowed;"/>
+            </div>
+          </div>
+
+          <div class="grid grid-2 gap-4">
+            <div class="form-group">
+              <label class="form-label">Nomor Induk Mahasiswa (NIM)</label>
+              <input type="text" id="profNIM" class="form-control" disabled style="background:var(--gray-100);"/>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Nomor WhatsApp / HP</label>
+              <input type="tel" id="profPhone" class="form-control" placeholder="+62 8xx xxxx xxxx"/>
+            </div>
+          </div>
+
+          <div class="grid grid-2 gap-4">
+            <div class="form-group">
+              <label class="form-label">Fakultas</label>
+              <input type="text" id="profFaculty" class="form-control" disabled style="background:var(--gray-100);"/>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Program Studi</label>
+              <input type="text" id="profMajor" class="form-control" disabled style="background:var(--gray-100);"/>
+            </div>
+          </div>
+
+          <div class="flex justify-end mt-4">
+            <button type="submit" class="btn btn-primary btn-lg">
+              <i class="fas fa-save"></i> Simpan Perubahan
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<div id="toastContainer" class="toast-container"></div>
+
+<!-- Scripts -->
+<script src="../js/patterns/singleton.js"></script>
+<script src="../js/patterns/factory.js"></script>
+<script src="../js/data/books.js"></script>
+<script src="../js/data/users.js"></script>
+<script src="../js/utils.js"></script>
+<script>
+let currentUser = null;
+
+document.addEventListener('DOMContentLoaded', () => {
+  const session = requireUser('../login.html');
+  if (!session) return;
+  currentUser = getUserById(session.userId);
+  if (!currentUser) return;
+
+  renderProfileAvatar(currentUser);
+  document.getElementById('profileNameBig').textContent = currentUser.name;
+  document.getElementById('profileFacultyMajor').textContent = `${currentUser.faculty || 'Fakultas MIPA'} • ${currentUser.major || 'Informatika'}`;
+  document.getElementById('profileNIMBig').textContent = currentUser.studentId || '-';
+
+  document.getElementById('profName').value = currentUser.name;
+  document.getElementById('profEmail').value = currentUser.email;
+  document.getElementById('profNIM').value = currentUser.studentId || '-';
+  document.getElementById('profPhone').value = currentUser.phone || '';
+  document.getElementById('profFaculty').value = currentUser.faculty || '-';
+  document.getElementById('profMajor').value = currentUser.major || '-';
+});
+
+function renderProfileAvatar(user) {
+  const avatarBig = document.getElementById('profileAvatarBig');
+  const btnRemove = document.getElementById('btnRemoveAvatar');
+  if (!avatarBig) return;
+
+  if (user && user.avatar) {
+    avatarBig.innerHTML = `<img src="${user.avatar}" class="avatar-img" alt="${user.name}" onerror="this.parentElement.textContent='${user.name.slice(0,1).toUpperCase()}';" />`;
+    avatarBig.style.background = 'transparent';
+    if (btnRemove) btnRemove.style.display = 'inline-flex';
+  } else {
+    avatarBig.textContent = (user ? user.name : 'M').slice(0, 1).toUpperCase();
+    avatarBig.style.background = 'linear-gradient(135deg, var(--gold-500), var(--gold-700))';
+    if (btnRemove) btnRemove.style.display = 'none';
+  }
+}
+
+function handleAvatarFileSelect(event) {
+  const file = event.target.files && event.target.files[0];
+  if (!file) return;
+
+  if (!file.type.startsWith('image/')) {
+    showToast('error', 'Format Tidak Didukung', 'Silakan pilih file gambar (JPG, PNG, atau WebP).');
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const img = new Image();
+    img.onload = function() {
+      const maxDim = 240;
+      let w = img.width;
+      let h = img.height;
+      if (w > maxDim || h > maxDim) {
+        const ratio = Math.min(maxDim / w, maxDim / h);
+        w = Math.round(w * ratio);
+        h = Math.round(h * ratio);
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, w, h);
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+
+      // Update user object & localStorage
+      currentUser.avatar = dataUrl;
+      updateUser(currentUser.id, { avatar: dataUrl });
+
+      // Update current session
+      const session = getCurrentSession();
+      if (session) {
+        session.avatar = dataUrl;
+        localStorage.setItem('pt_session', JSON.stringify(session));
+      }
+
+      // Refresh UI
+      renderProfileAvatar(currentUser);
+      if (window.updateUserNavAvatar) updateUserNavAvatar();
+
+      showToast('success', 'Foto Profil Diperbarui', 'Foto profil Anda berhasil diunggah.');
+    };
+    img.onerror = function() {
+      showToast('error', 'Gagal Memuat Gambar', 'File gambar tidak dapat dibaca.');
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function handleRemoveAvatar() {
+  if (!confirm('Apakah Anda yakin ingin menghapus foto profil dan kembali menggunakan inisial nama?')) return;
+
+  currentUser.avatar = null;
+  updateUser(currentUser.id, { avatar: null });
+
+  const session = getCurrentSession();
+  if (session) {
+    delete session.avatar;
+    localStorage.setItem('pt_session', JSON.stringify(session));
+  }
+
+  renderProfileAvatar(currentUser);
+  if (window.updateUserNavAvatar) updateUserNavAvatar();
+
+  const fileInput = document.getElementById('avatarFileInput');
+  if (fileInput) fileInput.value = '';
+
+  showToast('info', 'Foto Profil Dihapus', 'Foto profil kembali menggunakan inisial nama.');
+}
+
+function handleSaveProfile(e) {
+  e.preventDefault();
+  const name = document.getElementById('profName').value.trim();
+  const phone = document.getElementById('profPhone').value.trim();
+
+  if (!name) {
+    showToast('error', 'Nama tidak boleh kosong');
+    return;
+  }
+
+  updateUser(currentUser.id, { name, phone });
+  
+  // update session name
+  const session = getCurrentSession();
+  if (session) {
+    session.name = name;
+    localStorage.setItem('pt_session', JSON.stringify(session));
+  }
+
+  showToast('success', 'Profil Diperbarui', 'Data akun Anda berhasil disimpan.');
+  document.getElementById('profileNameBig').textContent = name;
+  if (!currentUser.avatar) {
+    document.getElementById('profileAvatarBig').textContent = name.slice(0, 1).toUpperCase();
+  }
+  if (window.updateUserNavAvatar) updateUserNavAvatar();
+}
+</script>
+</body>
+</html>

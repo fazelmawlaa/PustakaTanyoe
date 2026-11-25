@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Notifikasi — PustakaTanyoe USK</title>
+  <link rel="stylesheet" href="../css/style.css"/>
+  <link rel="stylesheet" href="../css/animations.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+</head>
+<body class="bg-secondary">
+
+<!-- Navigation -->
+<nav class="navbar" id="navbar">
+  <div class="container navbar-inner">
+    <a href="dashboard.html" class="navbar-brand">
+      <img src="../assets/images/logo_pustaka_tanyoe_usk_clean.png" alt="Pustaka Tanyoe USK" class="navbar-brand-logo-img" />
+    </a>
+    <div class="navbar-nav">
+      <a href="dashboard.html" class="nav-link">Dashboard</a>
+      <a href="catalog.html" class="nav-link">Katalog Buku</a>
+      <a href="my-loans.html" class="nav-link">Peminjaman Saya</a>
+      <a href="wishlist.html" class="nav-link">Wishlist</a>
+      <a href="notifications.html" class="nav-link active">Notifikasi <span class="notif-badge notif-count" style="display:none;">0</span></a>
+      <a href="profile.html" class="nav-link">Profil Saya</a>
+    </div>
+    <div class="navbar-actions" id="navUserArea">
+      <div class="dropdown">
+        <button class="btn btn-ghost" data-dropdown-trigger style="display:flex;align-items:center;gap:8px;">
+          <div class="avatar avatar-sm" id="userAvatar">M</div>
+          <span class="text-sm font-semibold" id="userNameHeader">Mahasiswa</span>
+          <i class="fas fa-chevron-down text-xs text-muted"></i>
+        </button>
+        <div class="dropdown-menu">
+          <a class="dropdown-item" href="profile.html"><i class="fas fa-user-circle"></i> Profil Saya</a>
+          <a class="dropdown-item" href="my-loans.html"><i class="fas fa-book-reader"></i> Riwayat Pinjam</a>
+          <a class="dropdown-item" href="notifications.html"><i class="fas fa-bell"></i> Pemberitahuan</a>
+          <div class="dropdown-divider"></div>
+          <div class="dropdown-item text-danger" onclick="handleLogout()" style="cursor:pointer;">
+            <i class="fas fa-sign-out-alt"></i> Keluar
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="hamburger" id="hamburger">
+      <span></span><span></span><span></span>
+    </div>
+  </div>
+</nav>
+
+<div class="mobile-menu" id="mobileMenu">
+  <a href="dashboard.html" class="nav-link">Dashboard</a>
+  <a href="catalog.html" class="nav-link">Katalog Buku</a>
+  <a href="my-loans.html" class="nav-link">Peminjaman Saya</a>
+  <a href="wishlist.html" class="nav-link">Wishlist</a>
+  <a href="notifications.html" class="nav-link active">Notifikasi</a>
+  <a href="profile.html" class="nav-link">Profil Saya</a>
+  <button onclick="handleLogout()" class="btn btn-danger btn-sm w-full mt-2">Keluar</button>
+</div>
+
+<main style="padding-top: calc(var(--navbar-height) + var(--space-8)); padding-bottom: var(--space-16);">
+  <div class="container" style="max-width: 800px;">
+    
+    <div class="flex items-center justify-between mb-6 flex-wrap gap-3">
+      <div>
+        <h1 style="font-family: var(--font-heading); font-size: var(--text-3xl); color: var(--navy-800); margin-bottom: 4px;">
+          Pusat Pemberitahuan
+        </h1>
+        <p class="text-sm text-muted">Update status pengajuan, jatuh tempo buku, dan info sirkulasi.</p>
+      </div>
+      <button class="btn btn-outline-gold btn-sm" onclick="markAllNotificationsRead()">
+        <i class="fas fa-check-double"></i> Tandai Semua Dibaca
+      </button>
+    </div>
+
+    <!-- Notification Cards List -->
+    <div class="card overflow-hidden" id="notificationList">
+      <!-- Dynamic notification list -->
+    </div>
+
+  </div>
+</main>
+
+<div id="toastContainer" class="toast-container"></div>
+
+<!-- Scripts -->
+<script src="../js/patterns/singleton.js"></script>
+<script src="../js/patterns/observer.js"></script>
+<script src="../js/patterns/factory.js"></script>
+<script src="../js/data/books.js"></script>
+<script src="../js/data/users.js"></script>
+<script src="../js/data/loans.js"></script>
+<script src="../js/utils.js"></script>
+<script>
+let currentUserId = null;
+
+document.addEventListener('DOMContentLoaded', () => {
+  const session = requireUser('../login.html');
+  if (!session) return;
+  currentUserId = session.userId;
+  renderNotifications();
+});
+
+function renderNotifications() {
+  const notifs = notificationSystem.getNotifications(currentUserId);
+  const container = document.getElementById('notificationList');
+
+  if (notifs.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <i class="far fa-bell empty-state-icon"></i>
+        <h3 class="empty-state-title">Tidak Ada Pemberitahuan</h3>
+        <p class="empty-state-desc">Pemberitahuan aktivitas peminjaman dan ketersediaan buku akan tampil di sini.</p>
+      </div>`;
+    return;
+  }
+
+  const iconMap = {
+    success: { icon: 'fa-check-circle', bg: 'var(--success-50)', color: 'var(--success-700)' },
+    warning: { icon: 'fa-exclamation-triangle', bg: 'var(--warning-50)', color: 'var(--warning-700)' },
+    danger:  { icon: 'fa-times-circle', bg: 'var(--danger-50)', color: 'var(--danger-700)' },
+    info:    { icon: 'fa-info-circle', bg: 'var(--info-50)', color: 'var(--info-700)' }
+  };
+
+  container.innerHTML = notifs.map(n => {
+    const theme = iconMap[n.type] || iconMap.info;
+    return `
+      <div class="notif-item ${n.read ? '' : 'unread'}" onclick="markAsRead('${n.id}', '${n.link || '#'}')">
+        <div class="notif-icon" style="background:${theme.bg}; color:${theme.color};">
+          <i class="fas ${theme.icon}"></i>
+        </div>
+        <div class="notif-content">
+          <div class="flex items-center justify-between">
+            <div class="notif-title">${n.title}</div>
+            <div class="notif-time">${timeAgo(n.createdAt)}</div>
+          </div>
+          <div class="notif-message">${n.message}</div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function markAsRead(id, link) {
+  notificationSystem.markRead(id);
+  renderNotifications();
+  if (link && link !== '#') {
+    window.location.href = link;
+  }
+}
+
+function markAllNotificationsRead() {
+  notificationSystem.markAllRead(currentUserId);
+  showToast('success', 'Semua Dibaca', 'Pemberitahuan berhasil ditandai telah dibaca.');
+  renderNotifications();
+}
+</script>
+</body>
+</html>

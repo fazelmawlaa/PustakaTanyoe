@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sirkulasi & Peminjaman — Admin PustakaTanyoe USK</title>
+  <link rel="stylesheet" href="../css/style.css"/>
+  <link rel="stylesheet" href="../css/animations.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <style>
+    /* ── Tight table: prevent horizontal scroll ── */
+    .table th, .table td {
+      padding: var(--space-3) var(--space-3);
+      font-size: var(--text-xs);
+    }
+    .table th {
+      white-space: nowrap;
+      font-size: 0.65rem;
+    }
+    /* ID Transaksi column is narrow */
+    .table td:first-child {
+      font-size: 0.65rem;
+      color: var(--gray-500);
+      white-space: nowrap;
+    }
+    /* Actions cell */
+    .action-cell {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 6px;
+      white-space: nowrap;
+    }
+
+    /* ── Setujui button — solid green ── */
+    .btn-approve {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 14px;
+      border-radius: var(--radius-lg);
+      font-size: var(--text-xs);
+      font-weight: 700;
+      cursor: pointer;
+      transition: var(--transition);
+      border: none;
+      background: var(--success-500);
+      color: white;
+      box-shadow: 0 2px 6px rgba(16,185,129,0.3);
+      white-space: nowrap;
+    }
+    .btn-approve:hover {
+      background: var(--success-600, #059669);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(16,185,129,0.4);
+    }
+
+    /* ── Tolak button — outline red ── */
+    .btn-reject {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 14px;
+      border-radius: var(--radius-lg);
+      font-size: var(--text-xs);
+      font-weight: 700;
+      cursor: pointer;
+      transition: var(--transition);
+      border: 1.5px solid var(--danger-500);
+      background: transparent;
+      color: var(--danger-600);
+      white-space: nowrap;
+    }
+    .btn-reject:hover {
+      background: var(--danger-500);
+      color: white;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(239,68,68,0.3);
+    }
+
+    /* ── Terima Kembali button — primary outlined ── */
+    .btn-return {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 14px;
+      border-radius: var(--radius-lg);
+      font-size: var(--text-xs);
+      font-weight: 700;
+      cursor: pointer;
+      transition: var(--transition);
+      border: none;
+      background: var(--gold-500);
+      color: white;
+      box-shadow: 0 2px 6px rgba(201,162,39,0.3);
+      white-space: nowrap;
+    }
+    .btn-return:hover {
+      background: var(--gold-600, #b7891f);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(201,162,39,0.4);
+    }
+  </style>
+</head>
+<body>
+
+<div class="app-layout">
+  <aside class="sidebar" id="sidebar">
+    <a href="dashboard.html" class="sidebar-brand">
+      <img src="../assets/images/logo_usk_clean.png" alt="Logo USK" class="sidebar-logo-img" />
+      <div class="sidebar-brand-text">
+        <div class="site-name">PustakaTanyoe</div>
+        <div class="site-sub">Admin Control Center</div>
+      </div>
+    </a>
+    <div class="sidebar-nav">
+      <div class="sidebar-section-label">Manajemen Utama</div>
+      <a href="dashboard.html" class="sidebar-link"><span class="link-icon"><i class="fas fa-tachometer-alt"></i></span><span>Dashboard</span></a>
+      <a href="books.html" class="sidebar-link"><span class="link-icon"><i class="fas fa-book"></i></span><span>Kelola Buku</span></a>
+      <a href="loans.html" class="sidebar-link active"><span class="link-icon"><i class="fas fa-clipboard-list"></i></span><span>Sirkulasi & Peminjaman</span></a>
+      <a href="members.html" class="sidebar-link"><span class="link-icon"><i class="fas fa-users"></i></span><span>Kelola Anggota</span></a>
+      <div class="sidebar-section-label">Layanan & Keuangan</div>
+      <a href="fines.html" class="sidebar-link"><span class="link-icon"><i class="fas fa-money-bill-wave"></i></span><span>Kelola Denda</span></a>
+      <a href="categories.html" class="sidebar-link"><span class="link-icon"><i class="fas fa-tags"></i></span><span>Kategori Koleksi</span></a>
+      <a href="reports.html" class="sidebar-link"><span class="link-icon"><i class="fas fa-chart-line"></i></span><span>Laporan & Statistik</span></a>
+    </div>
+    <div class="sidebar-footer" id="sidebarUser"></div>
+  </aside>
+
+  <div class="app-content">
+    <header class="app-header">
+      <div class="flex items-center gap-3">
+        <button class="btn btn-ghost btn-icon" onclick="document.getElementById('sidebar').classList.toggle('mobile-open')"><i class="fas fa-bars"></i></button>
+        <h2 class="app-header-title">Transaksi Sirkulasi Pustaka</h2>
+      </div>
+      <div class="app-header-actions">
+        <span class="badge badge-gold" id="activeLoansCountBadge">0 Aktif</span>
+      </div>
+    </header>
+
+    <main class="app-main">
+      <!-- Tabs filter -->
+      <div class="tabs">
+        <div class="tab-item active" onclick="filterLoanStatus('all', this)">Semua Transaksi</div>
+        <div class="tab-item" onclick="filterLoanStatus('pending', this)">Menunggu Approval</div>
+        <div class="tab-item" onclick="filterLoanStatus('active', this)">Sedang Dipinjam</div>
+        <div class="tab-item" onclick="filterLoanStatus('overdue', this)">Terlambat (Denda)</div>
+        <div class="tab-item" onclick="filterLoanStatus('returned', this)">Selesai Dikembalikan</div>
+      </div>
+
+      <div class="card">
+        <div class="table-wrapper">
+          <table class="table table-striped">
+            <thead>
+              <tr>
+                <th>ID Transaksi</th>
+                <th>Peminjam</th>
+                <th>Judul Buku</th>
+                <th>Tgl Pinjam</th>
+                <th>Jatuh Tempo</th>
+                <th>Status</th>
+                <th>Denda</th>
+                <th class="text-right">Aksi Tindakan</th>
+              </tr>
+            </thead>
+            <tbody id="adminLoansTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<div id="toastContainer" class="toast-container"></div>
+
+<!-- Scripts -->
+<script src="../js/patterns/singleton.js"></script>
+<script src="../js/patterns/observer.js"></script>
+<script src="../js/patterns/factory.js"></script>
+<script src="../js/patterns/strategy.js"></script>
+<script src="../js/patterns/decorator.js"></script>
+<script src="../js/data/books.js"></script>
+<script src="../js/data/users.js"></script>
+<script src="../js/data/loans.js"></script>
+<script src="../js/utils.js"></script>
+<script>
+let currentStatusFilter = 'all';
+
+document.addEventListener('DOMContentLoaded', () => {
+  const session = requireAdmin('../login.html');
+  if (!session) return;
+  renderLoansTable();
+});
+
+function filterLoanStatus(status, el) {
+  currentStatusFilter = status;
+  document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  renderLoansTable();
+}
+
+function renderLoansTable() {
+  let loans = getLoans();
+  const activeCount = loans.filter(l => l.status === 'active' || l.status === 'overdue').length;
+  document.getElementById('activeLoansCountBadge').textContent = `${activeCount} Aktif`;
+
+  if (currentStatusFilter !== 'all') {
+    loans = loans.filter(l => l.status === currentStatusFilter);
+  }
+
+  const tbody = document.getElementById('adminLoansTableBody');
+  if (loans.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="8" class="text-center py-6 text-muted">Tidak ada data transaksi.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = loans.map(l => {
+    const fine = calculateFine(l);
+    return `
+      <tr>
+        <td class="font-mono text-xs">${l.id}</td>
+        <td>
+          <div class="font-semibold text-navy">${l.userName}</div>
+          <div class="text-xs text-muted">ID: ${l.userId}</div>
+        </td>
+        <td>
+          <div class="font-semibold">${l.bookTitle}</div>
+          <div class="text-xs text-muted">${l.bookAuthor}</div>
+        </td>
+        <td>${l.borrowDate ? formatDateShort(l.borrowDate) : '-'}</td>
+        <td>${l.dueDate ? formatDateShort(l.dueDate) : '-'}</td>
+        <td>${getLoanStatusBadge(l.status)}</td>
+        <td class="font-semibold ${fine > 0 ? 'text-danger' : 'text-muted'}">${fine > 0 ? formatCurrency(fine) : 'Rp 0'}</td>
+        <td class="text-right">
+          ${l.status === 'pending' ? `
+            <div class="action-cell">
+              <button class="btn-approve" onclick="approveBorrow('${l.id}')"><i class="fas fa-check"></i> Setujui</button>
+              <button class="btn-reject"  onclick="rejectBorrow('${l.id}')"><i class="fas fa-times"></i> Tolak</button>
+            </div>` : ''}
+          ${['active', 'overdue'].includes(l.status) ? `
+            <div class="action-cell">
+              <button class="btn-return" onclick="processReturn('${l.id}')"><i class="fas fa-undo"></i> Terima Kembali</button>
+            </div>` : ''}
+        </td>
+      </tr>`;
+  }).join('');
+}
+
+function approveBorrow(id) {
+  const session = getCurrentSession();
+  const res = approveLoan(id, session.userId);
+  if (res.success) {
+    showToast('success', 'Disetujui', 'Peminjaman disetujui pustakawan.');
+    renderLoansTable();
+  } else {
+    showToast('error', 'Gagal', res.message);
+  }
+}
+
+function rejectBorrow(id) {
+  if (confirm('Tolak permohonan peminjaman ini?')) {
+    rejectLoan(id, 'Ditolak staf perpustakaan');
+    showToast('info', 'Ditolak', 'Permohonan peminjaman ditolak.');
+    renderLoansTable();
+  }
+}
+
+function processReturn(id) {
+  if (confirm('Konfirmasi penerimaan pengembalian buku fisik?')) {
+    const res = returnLoan(id);
+    if (res.success) {
+      if (res.fine > 0) {
+        showToast('warning', 'Buku Dikembalikan dengan Denda', `Denda keterlambatan: ${formatCurrency(res.fine)}.`);
+      } else {
+        showToast('success', 'Pengembalian Selesai', 'Buku telah dikembalikan dan stok diperbarui.');
+      }
+      renderLoansTable();
+    }
+  }
+}
+</script>
+</body>
+</html>

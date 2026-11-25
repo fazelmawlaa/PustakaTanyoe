@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Katalog Koleksi Pustaka — PustakaTanyoe USK</title>
+  <link rel="stylesheet" href="../css/style.css"/>
+  <link rel="stylesheet" href="../css/animations.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <style>
+    .catalog-layout {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      gap: var(--space-8);
+      align-items: start;
+    }
+    /* 3 Kolom per Baris untuk Grid Katalog Buku */
+    #booksCatalogGrid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--space-6);
+      width: 100%;
+    }
+    #booksCatalogGrid .book-card {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      border-radius: var(--radius-xl);
+      background: #ffffff;
+      border: 1px solid var(--color-border);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+      overflow: hidden;
+    }
+    #booksCatalogGrid .book-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 12px 24px -6px rgba(27, 43, 75, 0.12);
+      border-color: var(--gold-300);
+    }
+    #booksCatalogGrid .book-cover {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 3/4;
+      overflow: hidden;
+      background: var(--navy-800);
+    }
+    #booksCatalogGrid .book-cover-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.3s ease;
+    }
+    #booksCatalogGrid .book-card:hover .book-cover-img {
+      transform: scale(1.03);
+    }
+    #booksCatalogGrid .book-info {
+      padding: var(--space-5);
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    #booksCatalogGrid .book-category {
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--gold-600);
+      margin-bottom: var(--space-2);
+    }
+    #booksCatalogGrid .book-title {
+      font-family: var(--font-heading);
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--navy-900);
+      line-height: 1.35;
+      margin-bottom: var(--space-2);
+      min-height: 2.7em;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    #booksCatalogGrid .book-author {
+      font-size: var(--text-xs);
+      color: var(--gray-500);
+      margin-bottom: var(--space-2);
+    }
+    #booksCatalogGrid .book-actions {
+      margin-top: auto;
+      padding-top: var(--space-3);
+      display: flex;
+      gap: var(--space-2);
+    }
+
+    @media (max-width: 1100px) {
+      #booksCatalogGrid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--space-5);
+      }
+    }
+    @media (max-width: 900px) {
+      .catalog-layout {
+        grid-template-columns: 1fr;
+      }
+      .filter-card {
+        display: none;
+      }
+      .filter-card.show-mobile {
+        display: block;
+      }
+      #booksCatalogGrid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    @media (max-width: 600px) {
+      #booksCatalogGrid {
+        grid-template-columns: 1fr;
+        gap: var(--space-4);
+      }
+    }
+  </style>
+</head>
+<body class="bg-secondary">
+
+<!-- Navigation -->
+<nav class="navbar" id="navbar">
+  <div class="container navbar-inner">
+    <a href="dashboard.html" class="navbar-brand">
+      <img src="../assets/images/logo_pustaka_tanyoe_usk_clean.png" alt="Pustaka Tanyoe USK" class="navbar-brand-logo-img" />
+    </a>
+    <div class="navbar-nav">
+      <a href="dashboard.html" class="nav-link">Dashboard</a>
+      <a href="catalog.html" class="nav-link active">Katalog Buku</a>
+      <a href="my-loans.html" class="nav-link">Peminjaman Saya</a>
+      <a href="wishlist.html" class="nav-link">Wishlist</a>
+      <a href="notifications.html" class="nav-link">Notifikasi <span class="notif-badge notif-count" style="display:none;">0</span></a>
+      <a href="profile.html" class="nav-link">Profil Saya</a>
+    </div>
+    <div class="navbar-actions" id="navUserArea">
+      <div class="dropdown">
+        <button class="btn btn-ghost" data-dropdown-trigger style="display:flex;align-items:center;gap:8px;">
+          <div class="avatar avatar-sm" id="userAvatar">M</div>
+          <span class="text-sm font-semibold" id="userNameHeader">Mahasiswa</span>
+          <i class="fas fa-chevron-down text-xs text-muted"></i>
+        </button>
+        <div class="dropdown-menu">
+          <a class="dropdown-item" href="profile.html"><i class="fas fa-user-circle"></i> Profil Saya</a>
+          <a class="dropdown-item" href="my-loans.html"><i class="fas fa-book-reader"></i> Riwayat Pinjam</a>
+          <a class="dropdown-item" href="notifications.html"><i class="fas fa-bell"></i> Pemberitahuan</a>
+          <div class="dropdown-divider"></div>
+          <div class="dropdown-item text-danger" onclick="handleLogout()" style="cursor:pointer;">
+            <i class="fas fa-sign-out-alt"></i> Keluar
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="hamburger" id="hamburger">
+      <span></span><span></span><span></span>
+    </div>
+  </div>
+</nav>
+
+<div class="mobile-menu" id="mobileMenu">
+  <a href="dashboard.html" class="nav-link">Dashboard</a>
+  <a href="catalog.html" class="nav-link active">Katalog Buku</a>
+  <a href="my-loans.html" class="nav-link">Peminjaman Saya</a>
+  <a href="wishlist.html" class="nav-link">Wishlist</a>
+  <a href="notifications.html" class="nav-link">Notifikasi</a>
+  <a href="profile.html" class="nav-link">Profil Saya</a>
+  <button onclick="handleLogout()" class="btn btn-danger btn-sm w-full mt-2">Keluar</button>
+</div>
+
+<!-- Hero Search Banner (MIT Style) -->
+<section style="padding-top: calc(var(--navbar-height) + var(--space-8)); padding-bottom: var(--space-8); background: linear-gradient(135deg, var(--navy-900), var(--navy-700)); color: white;">
+  <div class="container text-center">
+    <span class="badge badge-gold mb-3"><i class="fas fa-search"></i> Telusuri Koleksi Universitas</span>
+    <h1 style="font-family: var(--font-heading); color: white; font-size: clamp(2rem, 4vw, 3rem); margin-bottom: var(--space-3);">
+      Katalog Pustaka USK
+    </h1>
+    <p style="color: rgba(255,255,255,0.7); max-width: 600px; margin: 0 auto var(--space-6); font-size: var(--text-base);">
+      Pencarian pintar multi-kriteria berbasis Strategy Design Pattern (Judul, Penulis, ISBN, Kategori, atau Teks Penuh).
+    </p>
+
+    <!-- Search Box -->
+    <div style="max-width: 720px; margin: 0 auto;">
+      <div class="search-bar">
+        <input type="text" id="searchInput" placeholder="Cari judul buku, nama pengarang, topik, atau nomor ISBN..." onkeyup="handleSearch()"/>
+        <button class="search-btn" onclick="handleSearch()"><i class="fas fa-search"></i> Cari</button>
+      </div>
+      <!-- Search Strategy Tabs -->
+      <div class="search-tabs mt-3" id="strategyTabs">
+        <div class="search-tab active" data-strategy="all" onclick="selectStrategy('all', this)">Semua Bidang</div>
+        <div class="search-tab" data-strategy="title" onclick="selectStrategy('title', this)">Judul</div>
+        <div class="search-tab" data-strategy="author" onclick="selectStrategy('author', this)">Penulis</div>
+        <div class="search-tab" data-strategy="isbn" onclick="selectStrategy('isbn', this)">ISBN</div>
+        <div class="search-tab" data-strategy="category" onclick="selectStrategy('category', this)">Kategori</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Main Catalog Area -->
+<main style="padding: var(--space-8) 0 var(--space-16);">
+  <div class="container">
+    <div class="catalog-layout">
+      
+      <!-- Left Sidebar: Filters -->
+      <div class="card filter-card" style="position: sticky; top: calc(var(--navbar-height) + var(--space-4));">
+        <div class="card-header">
+          <h4 class="card-title" style="font-size: var(--text-base);"><i class="fas fa-sliders-h text-gold"></i> Filter Koleksi</h4>
+          <button class="btn btn-ghost btn-sm" onclick="resetFilters()">Reset</button>
+        </div>
+        <div class="card-body">
+          
+          <!-- Category Filter -->
+          <div class="filter-group">
+            <div class="filter-group-title">Kategori Bidang Ilmu</div>
+            <div id="categoryFilterList" style="max-height: 240px; overflow-y: auto; padding-right: 4px;">
+              <!-- Dynamic Categories -->
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <!-- Availability Filter -->
+          <div class="filter-group">
+            <div class="filter-group-title">Status Ketersediaan</div>
+            <label class="filter-option">
+              <input type="checkbox" id="availOnlyCheck" onchange="handleSearch()"/>
+              <span>Hanya yang tersedia dipinjam</span>
+            </label>
+          </div>
+
+          <div class="divider"></div>
+
+          <!-- Sort Strategy -->
+          <div class="filter-group">
+            <div class="filter-group-title">Urutkan Berdasarkan</div>
+            <select class="form-control form-select" id="sortSelect" onchange="handleSearch()">
+              <option value="title">Judul (A - Z)</option>
+              <option value="author">Nama Penulis (A - Z)</option>
+              <option value="year_desc">Tahun Terbit (Terbaru)</option>
+              <option value="rating">Rating Tertinggi</option>
+              <option value="popular">Paling Sering Dipinjam</option>
+            </select>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Right Column: Results Grid -->
+      <div>
+        <!-- Top Toolbar -->
+        <div class="card mb-6" style="padding: var(--space-4) var(--space-6);">
+          <div class="flex items-center justify-between flex-wrap gap-3">
+            <div class="text-sm text-muted">
+              Menampilkan <span class="font-bold text-navy" id="resultCount">0</span> buku koleksi
+            </div>
+            <div class="flex items-center gap-3">
+              <span class="text-xs text-muted" id="activeStrategyBadge">Pencarian: Semua Bidang</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Books Grid -->
+        <div class="books-grid" id="booksCatalogGrid">
+          <!-- Dynamic Book Cards -->
+        </div>
+
+        <!-- Pagination -->
+        <div id="paginationContainer"></div>
+
+      </div>
+
+    </div>
+  </div>
+</main>
+
+<div id="toastContainer" class="toast-container"></div>
+
+<!-- Scripts -->
+<script src="../js/patterns/singleton.js"></script>
+<script src="../js/patterns/observer.js"></script>
+<script src="../js/patterns/factory.js"></script>
+<script src="../js/patterns/strategy.js"></script>
+<script src="../js/patterns/decorator.js"></script>
+<script src="../js/data/books.js"></script>
+<script src="../js/data/users.js"></script>
+<script src="../js/data/loans.js"></script>
+<script src="../js/utils.js"></script>
+<script>
+let currentStrategy = 'all';
+let currentPage = 1;
+const itemsPerPage = 9;
+let filteredBooks = [];
+
+document.addEventListener('DOMContentLoaded', () => {
+  initBookData();
+  
+  // Parse query params
+  const urlParams = new URLSearchParams(window.location.search);
+  const q = urlParams.get('q');
+  const cat = urlParams.get('category');
+  if (q) document.getElementById('searchInput').value = q;
+
+  renderCategoryFilters(cat);
+  handleSearch();
+});
+
+function selectStrategy(strategy, el) {
+  currentStrategy = strategy;
+  document.querySelectorAll('#strategyTabs .search-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('activeStrategyBadge').textContent = `Strategi: ${el.textContent}`;
+  handleSearch();
+}
+
+function renderCategoryFilters(selectedCat) {
+  const books = getBooks();
+  const catCounts = {};
+  books.forEach(b => {
+    catCounts[b.category] = (catCounts[b.category] || 0) + 1;
+  });
+
+  const catList = document.getElementById('categoryFilterList');
+  catList.innerHTML = Object.entries(catCounts).map(([cat, count]) => `
+    <label class="filter-option">
+      <input type="checkbox" name="catFilter" value="${cat}" ${selectedCat === cat ? 'checked' : ''} onchange="handleSearch()"/>
+      <span class="flex-1">${cat}</span>
+      <span class="badge badge-gray" style="font-size:0.65rem;">${count}</span>
+    </label>
+  `).join('');
+}
+
+function resetFilters() {
+  document.getElementById('searchInput').value = '';
+  document.getElementById('availOnlyCheck').checked = false;
+  document.getElementById('sortSelect').value = 'title';
+  document.querySelectorAll('input[name="catFilter"]').forEach(c => c.checked = false);
+  currentStrategy = 'all';
+  document.querySelectorAll('#strategyTabs .search-tab').forEach(t => t.classList.remove('active'));
+  document.querySelector('#strategyTabs .search-tab[data-strategy="all"]').classList.add('active');
+  handleSearch();
+}
+
+function handleSearch() {
+  const query = document.getElementById('searchInput').value.trim();
+  const sort = document.getElementById('sortSelect').value;
+  const availOnly = document.getElementById('availOnlyCheck').checked;
+
+  // Selected categories
+  const checkedCats = Array.from(document.querySelectorAll('input[name="catFilter"]:checked')).map(c => c.value);
+
+  // Strategy Pattern in action
+  const searchCtx = new SearchContext();
+  let results = searchCtx.execute(getBooks(), {
+    query,
+    strategy: currentStrategy,
+    sort: sort,
+    available: availOnly
+  });
+
+  if (checkedCats.length > 0) {
+    results = results.filter(b => checkedCats.includes(b.category));
+  }
+
+  filteredBooks = results;
+  document.getElementById('resultCount').textContent = filteredBooks.length;
+  currentPage = 1;
+  renderCatalogPage();
+}
+
+function renderCatalogPage() {
+  const grid = document.getElementById('booksCatalogGrid');
+  const start = (currentPage - 1) * itemsPerPage;
+  const pagedBooks = filteredBooks.slice(start, start + itemsPerPage);
+
+  if (pagedBooks.length === 0) {
+    grid.innerHTML = `
+      <div class="empty-state" style="grid-column: 1 / -1;">
+        <i class="fas fa-search empty-state-icon"></i>
+        <h3 class="empty-state-title">Buku Tidak Ditemukan</h3>
+        <p class="empty-state-desc">Coba gunakan kata kunci lain atau ubah pengaturan filter pencarian Anda.</p>
+        <button class="btn btn-outline-gold btn-sm" onclick="resetFilters()">Reset Filter</button>
+      </div>`;
+    document.getElementById('paginationContainer').innerHTML = '';
+    return;
+  }
+
+  // Decorator pattern applied dynamically
+  grid.innerHTML = pagedBooks.map(b => {
+    const decBook = BookDecoratorFactory.autoDecorate(b);
+    const available = (b.stock - (b.borrowed || 0)) > 0;
+    
+    return `
+      <div class="book-card card-hover animate-fadeInUp">
+        <a href="book-detail.html?id=${b.id}">
+          ${renderBookCover(b)}
+        </a>
+        <div class="book-info">
+          <div class="book-category">${b.category}</div>
+          <a href="book-detail.html?id=${b.id}"><h4 class="book-title" title="${b.title}">${b.title}</h4></a>
+          <div class="book-author"><i class="fas fa-user-edit text-xs"></i> ${b.author}</div>
+          <div class="text-xs text-muted mb-2"><i class="fas fa-calendar-alt text-xs"></i> Tahun ${b.year || '-'} • ISBN: ${(b.isbn || '-').slice(0,10)}...</div>
+          ${renderStars(b.rating)}
+          <div class="book-actions mt-3">
+            <a href="book-detail.html?id=${b.id}" class="btn btn-primary btn-sm flex-1">
+              <i class="fas fa-info-circle"></i> Detail
+            </a>
+            <button class="btn btn-outline btn-sm btn-icon" onclick="toggleWishlist('${b.id}')" title="Simpan ke Wishlist">
+              <i class="far fa-bookmark"></i>
+            </button>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+
+  document.getElementById('paginationContainer').innerHTML = createPagination(filteredBooks.length, itemsPerPage, currentPage, 'changePage');
+}
+
+function changePage(p) {
+  currentPage = p;
+  renderCatalogPage();
+  window.scrollTo({ top: 380, behavior: 'smooth' });
+}
+
+function toggleWishlist(bookId) {
+  const session = getCurrentSession();
+  if (!session) {
+    showToast('warning', 'Perlu Masuk', 'Silakan masuk terlebih dahulu untuk menyimpan wishlist.');
+    return;
+  }
+  const user = getUserById(session.userId);
+  if (!user) return;
+  user.wishlist = user.wishlist || [];
+  if (user.wishlist.includes(bookId)) {
+    user.wishlist = user.wishlist.filter(id => id !== bookId);
+    showToast('info', 'Dihapus dari Wishlist');
+  } else {
+    user.wishlist.push(bookId);
+    showToast('success', 'Disimpan ke Wishlist', 'Buku berhasil ditambahkan ke daftar bacaan.');
+  }
+  updateUser(user.id, { wishlist: user.wishlist });
+}
+</script>
+</body>
+</html>

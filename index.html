@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>PustakaTanyoe — Perpustakaan Digital Universitas Syiah Kuala</title>
+  <link rel="stylesheet" href="css/style.css"/>
+  <link rel="stylesheet" href="css/animations.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <style>
+    /* ── HERO ── */
+    .hero {
+      min-height: 100vh;
+      background: linear-gradient(135deg, rgba(10, 20, 40, 0.78) 0%, rgba(27, 43, 75, 0.72) 50%, rgba(10, 20, 40, 0.85) 100%),
+                  url('assets/images/bg%20onboarding.jpg') center/cover no-repeat;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+      padding-top: var(--navbar-height);
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 50% 40%, rgba(201,162,39,0.15) 0%, transparent 60%);
+      pointer-events: none;
+    }
+    .hero-content {
+      max-width: 900px;
+      margin: 0 auto;
+      text-align: center;
+      position: relative;
+      z-index: 1;
+      padding: var(--space-20) 0 var(--space-16);
+    }
+    .hero-title {
+      font-family: var(--font-display);
+      font-size: clamp(2.5rem, 5.5vw, 4.6rem);
+      font-weight: 400;
+      color: white;
+      line-height: 1.15;
+      margin-bottom: var(--space-6);
+      text-shadow: 0 4px 24px rgba(0,0,0,0.6);
+    }
+    .hero-title .highlight {
+      color: var(--gold-400);
+    }
+    .hero-desc {
+      font-size: clamp(1rem, 2vw, 1.25rem);
+      color: rgba(255,255,255,0.9);
+      line-height: 1.8;
+      margin: 0 auto var(--space-8);
+      max-width: 760px;
+      text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+    }
+    .hero-actions {
+      display: flex;
+      justify-content: center;
+      gap: var(--space-4);
+      flex-wrap: wrap;
+      margin-bottom: var(--space-12);
+    }
+    .btn-hero-secondary {
+      background: rgba(255,255,255,0.12);
+      color: white;
+      border: 1.5px solid rgba(255,255,255,0.35);
+      backdrop-filter: blur(8px);
+      transition: var(--transition);
+    }
+    .btn-hero-secondary:hover {
+      background: rgba(255,255,255,0.22);
+      color: white;
+      border-color: rgba(255,255,255,0.6);
+      transform: translateY(-2px);
+    }
+    .hero-stats {
+      display: flex;
+      justify-content: center;
+      gap: var(--space-12);
+      padding: var(--space-6) var(--space-8);
+      border-top: 1px solid rgba(255,255,255,0.18);
+      max-width: 720px;
+      margin: 0 auto;
+      background: rgba(10, 20, 40, 0.4);
+      border-radius: var(--radius-2xl);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.12);
+    }
+    .hero-stat-num {
+      font-family: var(--font-heading);
+      font-size: var(--text-3xl);
+      font-weight: 700;
+      color: var(--gold-400);
+      display: block;
+      line-height: 1;
+    }
+    .hero-stat-label {
+      font-size: var(--text-xs);
+      color: rgba(255,255,255,0.7);
+      font-weight: 600;
+      margin-top: 6px;
+      letter-spacing: 0.05em;
+    }
+    @media (max-width: 640px) {
+      .hero-stats {
+        gap: var(--space-4);
+        flex-direction: column;
+      }
+    }
+
+    /* ── Features Grid (Stanford Style) ── */
+    .feature-card {
+      background: white;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-xl);
+      padding: var(--space-6);
+      transition: var(--transition);
+      cursor: default;
+    }
+    .feature-card:hover {
+      border-color: var(--gold-300);
+      box-shadow: var(--shadow-md);
+      transform: translateY(-3px);
+    }
+    .feature-icon {
+      width: 52px; height: 52px;
+      border-radius: var(--radius-lg);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.3rem;
+      margin-bottom: var(--space-4);
+    }
+    .fi-gold  { background: var(--gold-100); color: var(--gold-700); }
+    .fi-navy  { background: var(--navy-100); color: var(--navy-700); }
+    .fi-green { background: var(--success-50); color: var(--success-700); }
+    .fi-blue  { background: var(--info-50); color: var(--info-700); }
+    .fi-red   { background: var(--danger-50); color: var(--danger-700); }
+    .fi-purple { background: #EDE9FE; color: #6D28D9; }
+
+    .feature-title { font-size: var(--text-lg); font-weight: 700; color: var(--navy-800); margin-bottom: var(--space-2); font-family: var(--font-heading); }
+    .feature-desc { font-size: var(--text-sm); color: var(--gray-500); line-height: 1.65; }
+
+    /* ── Featured Books (Harvard Style) ── */
+    .featured-books-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: var(--space-5);
+    }
+    @media (max-width: 1024px) { .featured-books-row { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 640px) { .featured-books-row { grid-template-columns: repeat(2, 1fr); } }
+
+    /* ── How it works ── */
+    .how-step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      padding: var(--space-6);
+      position: relative;
+    }
+    .how-step-num {
+      width: 64px; height: 64px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--gold-400), var(--gold-600));
+      color: white;
+      font-family: var(--font-heading);
+      font-size: var(--text-2xl);
+      font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: var(--space-5);
+      box-shadow: var(--shadow-gold);
+    }
+    .how-step-title { font-size: var(--text-lg); font-weight: 700; color: var(--navy-800); margin-bottom: var(--space-2); font-family: var(--font-heading); }
+    .how-step-desc { font-size: var(--text-sm); color: var(--gray-500); line-height: 1.65; }
+    .how-steps-connector {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      position: relative;
+      gap: 0;
+    }
+    .how-steps-connector::before {
+      content: '';
+      position: absolute;
+      top: 32px;
+      left: calc(16.6% + 32px);
+      right: calc(16.6% + 32px);
+      height: 2px;
+      background: linear-gradient(90deg, var(--gold-300), var(--gold-500), var(--gold-300));
+      z-index: 0;
+    }
+
+    /* ── USK Partnership Banner ── */
+    .usk-banner {
+      background: linear-gradient(135deg, var(--navy-900) 0%, var(--navy-800) 100%);
+      padding: var(--space-16) 0;
+      position: relative;
+      overflow: hidden;
+    }
+    .usk-banner::before {
+      content: '';
+      position: absolute;
+      right: -100px; top: -100px;
+      width: 400px; height: 400px;
+      background: radial-gradient(circle, rgba(201,162,39,0.08) 0%, transparent 70%);
+    }
+    .usk-banner-inner {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--space-12);
+      align-items: center;
+    }
+    .usk-logo-big {
+      width: 100px; height: 100px;
+      background: linear-gradient(135deg, var(--gold-400), var(--gold-600));
+      border-radius: var(--radius-2xl);
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-heading);
+      font-size: 2rem;
+      font-weight: 700;
+      color: white;
+      margin-bottom: var(--space-6);
+      box-shadow: var(--shadow-gold);
+    }
+    .usk-banner-title {
+      font-family: var(--font-heading);
+      font-size: clamp(1.5rem, 3vw, 2.5rem);
+      color: white;
+      margin-bottom: var(--space-4);
+    }
+    .usk-banner-desc { color: rgba(255,255,255,0.65); line-height: 1.75; margin-bottom: var(--space-6); }
+    .usk-badges { display: flex; gap: var(--space-3); flex-wrap: wrap; }
+    .usk-badge {
+      display: flex; align-items: center; gap: var(--space-2);
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: var(--radius-full);
+      padding: 6px 14px;
+      font-size: var(--text-xs);
+      color: rgba(255,255,255,0.8);
+    }
+    .usk-badge i { color: var(--gold-400); }
+
+    /* ── Testimonials ── */
+    .testimonial-card {
+      background: white;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-xl);
+      padding: var(--space-6);
+      position: relative;
+    }
+    .testimonial-card::before {
+      content: '"';
+      position: absolute;
+      top: -10px; left: var(--space-6);
+      font-size: 5rem;
+      font-family: var(--font-heading);
+      color: var(--gold-200);
+      line-height: 1;
+    }
+    .testimonial-text {
+      font-size: var(--text-sm);
+      color: var(--gray-600);
+      line-height: 1.75;
+      margin-bottom: var(--space-5);
+      margin-top: var(--space-4);
+    }
+    .testimonial-author { display: flex; align-items: center; gap: var(--space-3); }
+    .testimonial-name { font-weight: 700; font-size: var(--text-sm); color: var(--navy-800); }
+    .testimonial-role { font-size: var(--text-xs); color: var(--gray-400); }
+
+    /* ── Footer ── */
+    .footer {
+      background: var(--navy-900);
+      padding: var(--space-16) 0 var(--space-8);
+    }
+    .footer-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr;
+      gap: var(--space-10);
+      padding-bottom: var(--space-10);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      margin-bottom: var(--space-8);
+    }
+    .footer-brand .site-name { color: white; font-family: var(--font-heading); font-size: var(--text-xl); font-weight: 700; margin-bottom: var(--space-3); }
+    .footer-brand p { color: rgba(255,255,255,0.5); font-size: var(--text-sm); line-height: 1.7; margin-bottom: var(--space-5); }
+    .footer-social { display: flex; gap: var(--space-3); }
+    .social-btn {
+      width: 36px; height: 36px;
+      border-radius: var(--radius-md);
+      background: rgba(255,255,255,0.08);
+      display: flex; align-items: center; justify-content: center;
+      color: rgba(255,255,255,0.6);
+      font-size: var(--text-sm);
+      transition: var(--transition);
+      text-decoration: none;
+    }
+    .social-btn:hover { background: var(--gold-500); color: white; }
+    .footer-heading { font-weight: 700; color: white; font-size: var(--text-sm); margin-bottom: var(--space-4); letter-spacing: 0.05em; text-transform: uppercase; }
+    .footer-links { display: flex; flex-direction: column; gap: var(--space-3); }
+    .footer-link { color: rgba(255,255,255,0.5); font-size: var(--text-sm); text-decoration: none; transition: var(--transition); }
+    .footer-link:hover { color: var(--gold-400); }
+    .footer-bottom { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--space-3); }
+    .footer-bottom p { color: rgba(255,255,255,0.4); font-size: var(--text-xs); }
+    .footer-bottom .gold { color: var(--gold-400); }
+
+    @media (max-width: 1024px) { .footer-grid { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 768px) {
+      .usk-banner-inner { grid-template-columns: 1fr; }
+      .how-steps-connector { grid-template-columns: 1fr; }
+      .how-steps-connector::before { display: none; }
+    }
+    @media (max-width: 640px) { .footer-grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+
+<!-- ── NAVBAR ── -->
+<nav class="navbar" id="navbar">
+  <div class="container navbar-inner">
+    <a href="index.html" class="navbar-brand">
+      <img src="assets/images/logo_pustaka_tanyoe_usk_clean.png" alt="Pustaka Tanyoe USK" class="navbar-brand-logo-img" />
+    </a>
+    <nav class="navbar-nav">
+      <a href="#catalog"      class="nav-link">Koleksi</a>
+      <a href="#features"     class="nav-link">Layanan</a>
+      <a href="#how-it-works" class="nav-link">Cara Pakai</a>
+      <a href="#about-usk"    class="nav-link">Tentang USK</a>
+    </nav>
+    <div class="navbar-actions" id="navUserArea">
+      <a href="login.html"    class="btn btn-outline btn-sm">Masuk</a>
+      <a href="register.html" class="btn btn-primary btn-sm">Daftar <i class="fas fa-arrow-right"></i></a>
+    </div>
+    <div class="hamburger" id="hamburger">
+      <span></span><span></span><span></span>
+    </div>
+  </div>
+</nav>
+<div class="mobile-menu" id="mobileMenu">
+  <a href="#catalog"      class="nav-link">Koleksi</a>
+  <a href="#features"     class="nav-link">Layanan</a>
+  <a href="#how-it-works" class="nav-link">Cara Pakai</a>
+  <a href="login.html"    class="btn btn-outline btn-sm w-full" style="margin-top:8px;">Masuk</a>
+  <a href="register.html" class="btn btn-primary btn-sm w-full">Daftar</a>
+</div>
+
+<!-- ── HERO ── -->
+<section class="hero">
+  <div class="container">
+    <div class="hero-content animate-fadeInUp">
+      <h1 class="hero-title">
+        Jelajahi Dunia <span class="highlight">Ilmu Pengetahuan</span><br>
+        di Ujung Jari Anda
+      </h1>
+      <p class="hero-desc">
+        PustakaTanyoe adalah platform perpustakaan digital Universitas Syiah Kuala yang menyediakan akses ribuan koleksi buku ilmiah, jurnal, dan karya akademik untuk sivitas akademika USK.
+      </p>
+      <div class="hero-actions">
+        <a href="user/catalog.html" class="btn btn-primary btn-xl">
+          <i class="fas fa-search"></i> Jelajahi Koleksi
+        </a>
+        <a href="register.html" class="btn btn-xl btn-hero-secondary">
+          Daftar Gratis <i class="fas fa-arrow-right"></i>
+        </a>
+      </div>
+      <div class="hero-stats">
+        <div>
+          <span class="hero-stat-num" data-counter="5000">0</span>
+          <div class="hero-stat-label">Koleksi Buku</div>
+        </div>
+        <div>
+          <span class="hero-stat-num" data-counter="12500">0</span>
+          <div class="hero-stat-label">Anggota Aktif</div>
+        </div>
+        <div>
+          <span class="hero-stat-num" data-counter="850">0</span>
+          <div class="hero-stat-label">Peminjaman / Bulan</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── FEATURES (Stanford Style) ── -->
+<section class="section bg-secondary" id="features">
+  <div class="container">
+    <div class="section-header reveal">
+      <div class="section-label">Layanan Kami</div>
+      <h2 class="section-title">Semua yang Anda Butuhkan<br>dalam Satu Platform</h2>
+      <p class="section-desc">Perpustakaan digital modern dengan fitur lengkap untuk mendukung kegiatan akademik sivitas USK.</p>
+    </div>
+    <div class="grid grid-3" style="gap:var(--space-5);">
+      <div class="feature-card reveal delay-100">
+        <div class="feature-icon fi-gold"><i class="fas fa-search"></i></div>
+        <h3 class="feature-title">Pencarian Canggih</h3>
+        <p class="feature-desc">Cari buku berdasarkan judul, penulis, ISBN, atau kategori dengan hasil instan dan relevan.</p>
+      </div>
+      <div class="feature-card reveal delay-200">
+        <div class="feature-icon fi-navy"><i class="fas fa-hand-holding-heart"></i></div>
+        <h3 class="feature-title">Peminjaman Online</h3>
+        <p class="feature-desc">Ajukan peminjaman buku langsung dari platform. Konfirmasi otomatis, tanpa perlu antre.</p>
+      </div>
+      <div class="feature-card reveal delay-300">
+        <div class="feature-icon fi-green"><i class="fas fa-bell"></i></div>
+        <h3 class="feature-title">Notifikasi Cerdas</h3>
+        <p class="feature-desc">Dapatkan pengingat otomatis jatuh tempo, persetujuan peminjaman, dan ketersediaan buku.</p>
+      </div>
+      <div class="feature-card reveal delay-200">
+        <div class="feature-icon fi-blue"><i class="fas fa-bookmark"></i></div>
+        <h3 class="feature-title">Daftar Keinginan</h3>
+        <p class="feature-desc">Simpan buku favorit ke wishlist dan dapatkan notifikasi ketika buku tersedia untuk dipinjam.</p>
+      </div>
+      <div class="feature-card reveal delay-300">
+        <div class="feature-icon fi-red"><i class="fas fa-history"></i></div>
+        <h3 class="feature-title">Riwayat Lengkap</h3>
+        <p class="feature-desc">Pantau semua aktivitas peminjaman: buku aktif, riwayat, dan status pengembalian secara real-time.</p>
+      </div>
+      <div class="feature-card reveal delay-400">
+        <div class="feature-icon fi-purple"><i class="fas fa-chart-bar"></i></div>
+        <h3 class="feature-title">Dashboard Admin</h3>
+        <p class="feature-desc">Panel admin komprehensif dengan statistik, laporan, dan kelola buku, anggota, serta denda.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── FEATURED BOOKS (Harvard Style) ── -->
+<section class="section" id="catalog">
+  <div class="container">
+    <div class="section-header reveal" style="display:flex;align-items:center;justify-content:space-between;text-align:left;margin-bottom:var(--space-8);flex-wrap:wrap;gap:var(--space-4);">
+      <div>
+        <div class="section-label" style="margin-left:0;padding-left:0;">Koleksi Terpopuler</div>
+        <h2 class="section-title" style="margin-bottom:0;">Buku Paling Banyak Dipinjam</h2>
+        <p class="text-xs text-muted mt-1" style="color:var(--gray-500);">Koleksi buku literatur paling diminati sivitas akademika USK</p>
+      </div>
+      <a href="user/catalog.html" class="btn btn-outline-gold">Lihat Semua Koleksi <i class="fas fa-arrow-right"></i></a>
+    </div>
+    <div class="featured-books-row" id="featuredBooksGrid">
+      <!-- Filled by JS -->
+      <div class="skeleton skeleton-card"></div>
+      <div class="skeleton skeleton-card"></div>
+      <div class="skeleton skeleton-card"></div>
+      <div class="skeleton skeleton-card"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ── HOW IT WORKS ── -->
+<section class="section bg-secondary" id="how-it-works">
+  <div class="container">
+    <div class="section-header reveal">
+      <div class="section-label">Cara Penggunaan</div>
+      <h2 class="section-title">Mulai dalam 3 Langkah Mudah</h2>
+    </div>
+    <div class="how-steps-connector">
+      <div class="how-step reveal delay-100">
+        <div class="how-step-num">1</div>
+        <h3 class="how-step-title">Daftar Akun</h3>
+        <p class="how-step-desc">Daftarkan diri dengan NIM dan email USK. Verifikasi akan diproses oleh pustakawan dalam 1x24 jam.</p>
+      </div>
+      <div class="how-step reveal delay-300">
+        <div class="how-step-num">2</div>
+        <h3 class="how-step-title">Cari & Pilih Buku</h3>
+        <p class="how-step-desc">Jelajahi ribuan koleksi, gunakan filter kategori, dan klik "Pinjam" pada buku yang Anda inginkan.</p>
+      </div>
+      <div class="how-step reveal delay-500">
+        <div class="how-step-num">3</div>
+        <h3 class="how-step-title">Ambil & Nikmati</h3>
+        <p class="how-step-desc">Setelah disetujui, ambil buku di perpustakaan. Kembalikan tepat waktu untuk menghindari denda.</p>
+      </div>
+    </div>
+    <div class="text-center mt-8">
+      <a href="register.html" class="btn btn-primary btn-xl">
+        <i class="fas fa-user-plus"></i> Daftar Sekarang — Gratis
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ── USK Partnership Banner ── -->
+<section class="usk-banner" id="about-usk">
+  <div class="container">
+    <div class="usk-banner-inner">
+      <div class="reveal-left">
+        <img src="assets/images/logo_usk_clean.png" alt="Universitas Syiah Kuala" style="width:84px; height:84px; object-fit:contain; margin-bottom:var(--space-4); filter:drop-shadow(0 6px 18px rgba(201,162,39,0.3));" />
+        <h2 class="usk-banner-title">Kolaborasi Resmi dengan<br>Universitas Syiah Kuala</h2>
+        <p class="usk-banner-desc">
+          PustakaTanyoe dikembangkan bekerja sama dengan Perpustakaan Universitas Syiah Kuala (Unsyiah), salah satu universitas terbesar dan tertua di Aceh, untuk memberikan layanan perpustakaan digital terbaik bagi sivitas akademika.
+        </p>
+        <div class="usk-badges">
+          <div class="usk-badge"><i class="fas fa-university"></i> Universitas Syiah Kuala</div>
+          <div class="usk-badge"><i class="fas fa-map-marker-alt"></i> Banda Aceh, Aceh</div>
+          <div class="usk-badge"><i class="fas fa-award"></i> Terakreditasi A</div>
+        </div>
+      </div>
+      <div class="reveal-right">
+        <div class="grid" style="grid-template-columns:1fr 1fr;gap:var(--space-4);">
+          <div class="stat-card stat-gold" style="background:rgba(255,255,255,0.05);border-color:rgba(255,255,255,0.1);">
+            <div class="stat-number" style="color:var(--gold-400);" data-counter="5000">0</div>
+            <div class="stat-label" style="color:rgba(255,255,255,0.5);">Koleksi Buku</div>
+          </div>
+          <div class="stat-card stat-navy" style="background:rgba(255,255,255,0.05);border-color:rgba(255,255,255,0.1);">
+            <div class="stat-number" style="color:var(--gold-400);" data-counter="12500">0</div>
+            <div class="stat-label" style="color:rgba(255,255,255,0.5);">Anggota</div>
+          </div>
+          <div class="stat-card stat-green" style="background:rgba(255,255,255,0.05);border-color:rgba(255,255,255,0.1);">
+            <div class="stat-number" style="color:var(--gold-400);" data-counter="850">0</div>
+            <div class="stat-label" style="color:rgba(255,255,255,0.5);">Peminjaman/Bulan</div>
+          </div>
+          <div class="stat-card stat-red" style="background:rgba(255,255,255,0.05);border-color:rgba(255,255,255,0.1);">
+            <div class="stat-number" style="color:var(--gold-400);" data-counter="16">0</div>
+            <div class="stat-label" style="color:rgba(255,255,255,0.5);">Kategori Koleksi</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── TESTIMONIALS ── -->
+<section class="section">
+  <div class="container">
+    <div class="section-header reveal">
+      <div class="section-label">Testimoni</div>
+      <h2 class="section-title">Apa Kata Pengguna Kami?</h2>
+    </div>
+    <div class="grid grid-3" style="gap:var(--space-5);">
+      <div class="testimonial-card reveal delay-100">
+        <p class="testimonial-text">"PustakaTanyoe sangat membantu penelitian tugas akhir saya. Fitur pencarian yang canggih memudahkan saya menemukan referensi yang dibutuhkan dengan cepat!"</p>
+        <div class="testimonial-author">
+          <div class="avatar avatar-md" style="background:linear-gradient(135deg,var(--gold-500),var(--gold-700));">AR</div>
+          <div>
+            <div class="testimonial-name">Aulia Rahma</div>
+            <div class="testimonial-role">Mahasiswi Informatika, Sem. 7</div>
+          </div>
+        </div>
+      </div>
+      <div class="testimonial-card reveal delay-300">
+        <p class="testimonial-text">"Sebagai dosen, saya sangat mengapresiasi ketersediaan koleksi buku referensi yang lengkap. Sistem notifikasi jatuh tempo juga sangat berguna!"</p>
+        <div class="testimonial-author">
+          <div class="avatar avatar-md" style="background:linear-gradient(135deg,var(--navy-500),var(--navy-700));">DH</div>
+          <div>
+            <div class="testimonial-name">Dr. Dian Hafidh</div>
+            <div class="testimonial-role">Dosen Fakultas MIPA USK</div>
+          </div>
+        </div>
+      </div>
+      <div class="testimonial-card reveal delay-500">
+        <p class="testimonial-text">"Interface-nya clean dan modern, sangat mudah digunakan. Proses peminjaman online menghemat banyak waktu dibanding harus ke perpustakaan langsung."</p>
+        <div class="testimonial-author">
+          <div class="avatar avatar-md" style="background:linear-gradient(135deg,var(--green-400),var(--green-600));">RP</div>
+          <div>
+            <div class="testimonial-name">Rizki Pratama</div>
+            <div class="testimonial-role">Mahasiswa Teknik Sipil, Sem. 5</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── FOOTER ── -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <div style="margin-bottom:var(--space-4);">
+          <img src="assets/images/logo_pustaka_tanyoe_usk_clean.png" alt="Pustaka Tanyoe USK" class="navbar-brand-logo-img" style="height:44px;" />
+        </div>
+        <p>Platform perpustakaan digital Universitas Syiah Kuala. Mendukung kegiatan akademik dengan koleksi buku ilmiah yang lengkap dan layanan peminjaman yang mudah.</p>
+        <div class="footer-social">
+          <a href="#" class="social-btn"><i class="fab fa-instagram"></i></a>
+          <a href="#" class="social-btn"><i class="fab fa-twitter"></i></a>
+          <a href="#" class="social-btn"><i class="fab fa-facebook"></i></a>
+          <a href="#" class="social-btn"><i class="fab fa-youtube"></i></a>
+        </div>
+      </div>
+      <div>
+        <h4 class="footer-heading">Layanan</h4>
+        <div class="footer-links">
+          <a href="user/catalog.html" class="footer-link">Katalog Buku</a>
+          <a href="#" class="footer-link">Peminjaman Online</a>
+          <a href="#" class="footer-link">Notifikasi</a>
+          <a href="#" class="footer-link">Riwayat Pinjam</a>
+        </div>
+      </div>
+      <div>
+        <h4 class="footer-heading">Universitas</h4>
+        <div class="footer-links">
+          <a href="#" class="footer-link">Tentang USK</a>
+          <a href="#" class="footer-link">Perpustakaan Pusat</a>
+          <a href="#" class="footer-link">Jadwal Layanan</a>
+          <a href="#" class="footer-link">Kontak</a>
+        </div>
+      </div>
+      <div>
+        <h4 class="footer-heading">Kontak</h4>
+        <div class="footer-links">
+          <span class="footer-link"><i class="fas fa-map-marker-alt" style="color:var(--gold-400);width:16px;"></i> Jl. T. Nyak Arief, Banda Aceh</span>
+          <span class="footer-link"><i class="fas fa-phone" style="color:var(--gold-400);width:16px;"></i> +62 651 7554395</span>
+          <span class="footer-link"><i class="fas fa-envelope" style="color:var(--gold-400);width:16px;"></i> pustaka@usk.ac.id</span>
+          <span class="footer-link"><i class="fas fa-clock" style="color:var(--gold-400);width:16px;"></i> Sen–Jum: 08.00–20.00</span>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>© 2024 <span class="gold">PustakaTanyoe</span> — Universitas Syiah Kuala. All rights reserved.</p>
+      <p>Dibuat dengan <span class="gold">❤</span> untuk sivitas akademika USK</p>
+    </div>
+  </div>
+</footer>
+
+<div id="toastContainer" class="toast-container"></div>
+
+<!-- Scripts -->
+<script src="js/patterns/singleton.js"></script>
+<script src="js/patterns/observer.js"></script>
+<script src="js/patterns/factory.js"></script>
+<script src="js/patterns/strategy.js"></script>
+<script src="js/patterns/decorator.js"></script>
+<script src="js/data/books.js"></script>
+<script src="js/data/users.js"></script>
+<script src="js/data/loans.js"></script>
+<script src="js/utils.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  // Initialize data
+  initBookData(); initUserData(); initLoanData();
+
+  // Check session for navbar
+  const session = getCurrentSession();
+  const navUserArea = document.getElementById('navUserArea');
+  if (session && navUserArea) {
+    const initials = session.name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+    navUserArea.innerHTML = `
+      <a href="${session.role==='admin'?'admin/dashboard.html':'user/dashboard.html'}" class="btn btn-outline btn-sm">Dashboard</a>
+      <div class="avatar avatar-sm" style="cursor:pointer;" onclick="handleLogout()">${initials}</div>`;
+  }
+
+  <!-- Load featured books: Most Borrowed (Buku Paling Banyak Dipinjam) -->
+  const books = getBooks().sort((a, b) => (b.borrowCount || 0) - (a.borrowCount || 0)).slice(0, 4);
+  const grid = document.getElementById('featuredBooksGrid');
+  if (grid && books.length > 0) {
+    grid.innerHTML = books.map(b => `
+      <div class="book-card card-hover animate-fadeInUp" style="display:flex; flex-direction:column; height:100%;">
+        <a href="user/book-detail.html?id=${b.id}">
+          ${renderBookCover(b)}
+        </a>
+        <div class="book-info" style="padding: var(--space-4); display:flex; flex-direction:column; flex:1;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-2);">
+            <div class="book-category">${b.category}</div>
+            <span class="badge badge-gold" style="font-size:0.65rem; padding: 2px 6px;"><i class="fas fa-fire"></i> ${b.borrowCount || 0}x pinjam</span>
+          </div>
+          <a href="user/book-detail.html?id=${b.id}"><h4 class="book-title" style="font-size:0.95rem; margin-bottom:4px;">${b.title}</h4></a>
+          <div class="book-author" style="font-size:0.75rem; color:var(--gray-500); margin-bottom:6px;">${b.author}</div>
+          <div style="margin-bottom: var(--space-3);">${renderStars(b.rating || 4.5)}</div>
+          <div class="book-actions" style="margin-top:auto; padding-top:var(--space-2);">
+            <a href="user/book-detail.html?id=${b.id}" class="btn btn-primary btn-sm w-full">
+              <i class="fas fa-eye"></i> Detail Buku
+            </a>
+          </div>
+        </div>
+      </div>`).join('');
+  }
+
+  // Init counters, navbar, etc.
+  initCounters();
+  initScrollReveal();
+  initNavbar();
+  initMobileMenu();
+});
+</script>
+</body>
+</html>

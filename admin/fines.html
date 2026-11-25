@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Kelola Denda — Admin PustakaTanyoe USK</title>
+  <link rel="stylesheet" href="../css/style.css"/>
+  <link rel="stylesheet" href="../css/animations.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+</head>
+<body>
+
+<div class="app-layout">
+  <aside class="sidebar" id="sidebar">
+    <a href="dashboard.html" class="sidebar-brand">
+      <img src="../assets/images/logo_usk_clean.png" alt="Logo USK" class="sidebar-logo-img" />
+      <div class="sidebar-brand-text">
+        <div class="site-name">PustakaTanyoe</div>
+        <div class="site-sub">Admin Control Center</div>
+      </div>
+    </a>
+    <div class="sidebar-nav">
+      <div class="sidebar-section-label">Manajemen Utama</div>
+      <a href="dashboard.html" class="sidebar-link"><span class="link-icon"><i class="fas fa-tachometer-alt"></i></span><span>Dashboard</span></a>
+      <a href="books.html" class="sidebar-link"><span class="link-icon"><i class="fas fa-book"></i></span><span>Kelola Buku</span></a>
+      <a href="loans.html" class="sidebar-link"><span class="link-icon"><i class="fas fa-clipboard-list"></i></span><span>Sirkulasi & Peminjaman</span></a>
+      <a href="members.html" class="sidebar-link"><span class="link-icon"><i class="fas fa-users"></i></span><span>Kelola Anggota</span></a>
+      <div class="sidebar-section-label">Layanan & Keuangan</div>
+      <a href="fines.html" class="sidebar-link active"><span class="link-icon"><i class="fas fa-money-bill-wave"></i></span><span>Kelola Denda</span></a>
+      <a href="categories.html" class="sidebar-link"><span class="link-icon"><i class="fas fa-tags"></i></span><span>Kategori Koleksi</span></a>
+      <a href="reports.html" class="sidebar-link"><span class="link-icon"><i class="fas fa-chart-line"></i></span><span>Laporan & Statistik</span></a>
+    </div>
+    <div class="sidebar-footer" id="sidebarUser"></div>
+  </aside>
+
+  <div class="app-content">
+    <header class="app-header">
+      <div class="flex items-center gap-3">
+        <button class="btn btn-ghost btn-icon" onclick="document.getElementById('sidebar').classList.toggle('mobile-open')"><i class="fas fa-bars"></i></button>
+        <h2 class="app-header-title">Rekapitulasi & Pembayaran Denda</h2>
+      </div>
+      <div class="app-header-actions">
+        <span class="badge badge-red" id="totalUnpaidFinesBadge">Total: Rp 0</span>
+      </div>
+    </header>
+
+    <main class="app-main">
+      <div class="card mb-6">
+        <div class="card-body p-6 flex justify-between items-center flex-wrap gap-4" style="background:var(--gold-50); border: 1px solid var(--gold-200); border-radius: var(--radius-xl);">
+          <div>
+            <h4 class="font-bold text-navy" style="font-size: var(--text-lg);"><i class="fas fa-info-circle text-gold"></i> Tarif Ketentuan Denda Perpustakaan</h4>
+            <p class="text-sm text-muted mt-1">Tarif resmi denda keterlambatan buku fisik USK adalah <strong>Rp 1.000 per hari per buku</strong> setelah masa tenggang.</p>
+          </div>
+          <div class="text-right">
+            <span class="text-xs text-muted">Kas Denda Terkumpul</span>
+            <div class="text-2xl font-bold text-success" id="collectedFinesText">Rp 25.000</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h4 class="card-title" style="font-size: var(--text-base);"><i class="fas fa-receipt text-gold"></i> Daftar Tunggakan & Riwayat Denda Mahasiswa</h4>
+        </div>
+        <div class="table-wrapper">
+          <table class="table table-striped">
+            <thead>
+              <tr>
+                <th>Mahasiswa (NIM)</th>
+                <th>Judul Buku</th>
+                <th>Jatuh Tempo</th>
+                <th>Hari Terlambat</th>
+                <th>Nominal Denda</th>
+                <th>Status Pembayaran</th>
+                <th class="text-right">Aksi Pelunasan</th>
+              </tr>
+            </thead>
+            <tbody id="finesTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<div id="toastContainer" class="toast-container"></div>
+
+<!-- Scripts -->
+<script src="../js/patterns/singleton.js"></script>
+<script src="../js/patterns/observer.js"></script>
+<script src="../js/patterns/factory.js"></script>
+<script src="../js/data/books.js"></script>
+<script src="../js/data/users.js"></script>
+<script src="../js/data/loans.js"></script>
+<script src="../js/utils.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const session = requireAdmin('../login.html');
+  if (!session) return;
+  renderFinesTable();
+});
+
+function renderFinesTable() {
+  const loans = getLoans();
+  let totalUnpaid = 0;
+
+  const finesData = [];
+  loans.forEach(l => {
+    const fine = calculateFine(l);
+    if (fine > 0 || l.fine > 0) {
+      const isPaid = l.finePaid === true;
+      if (!isPaid) totalUnpaid += fine;
+      const daysLate = Math.ceil(fine / 1000);
+      finesData.push({ ...l, fineAmount: fine, isPaid, daysLate });
+    }
+  });
+
+  document.getElementById('totalUnpaidFinesBadge').textContent = `Tunggakan: ${formatCurrency(totalUnpaid)}`;
+
+  const tbody = document.getElementById('finesTableBody');
+  if (finesData.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="7" class="text-center py-6 text-muted"><i class="fas fa-smile text-success"></i> Tidak ada tunggakan denda aktif.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = finesData.map(item => `
+    <tr>
+      <td>
+        <div class="font-semibold text-navy">${item.userName}</div>
+        <div class="text-xs text-muted">ID: ${item.userId}</div>
+      </td>
+      <td>
+        <div class="font-semibold">${item.bookTitle}</div>
+        <div class="text-xs text-muted">${item.bookAuthor}</div>
+      </td>
+      <td>${formatDateShort(item.dueDate)}</td>
+      <td class="font-semibold text-danger">${item.daysLate} hari</td>
+      <td class="font-bold text-danger">${formatCurrency(item.fineAmount)}</td>
+      <td>${item.isPaid ? '<span class="badge badge-green">Lunas</span>' : '<span class="badge badge-red">Belum Lunas</span>'}</td>
+      <td class="text-right">
+        ${!item.isPaid ? `
+          <button class="btn btn-success btn-sm" onclick="markFinePaid('${item.id}', ${item.fineAmount})">
+            <i class="fas fa-check-circle"></i> Terima Pembayaran
+          </button>` : '<span class="text-xs text-muted"><i class="fas fa-check"></i> Selesai</span>'}
+      </td>
+    </tr>`).join('');
+}
+
+function markFinePaid(loanId, amount) {
+  if (confirm(`Konfirmasi pembayaran denda sebesar ${formatCurrency(amount)}?`)) {
+    const loans = getLoans();
+    const l = loans.find(x => x.id === loanId);
+    if (l) {
+      l.finePaid = true;
+      saveLoans(loans);
+      showToast('success', 'Pembayaran Tercatat', 'Denda berhasil dilunasi.');
+      renderFinesTable();
+    }
+  }
+}
+</script>
+</body>
+</html>

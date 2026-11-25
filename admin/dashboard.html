@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Dashboard — PustakaTanyoe USK</title>
+  <link rel="stylesheet" href="../css/style.css"/>
+  <link rel="stylesheet" href="../css/animations.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <!-- Chart.js CDN for university analytics -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    /* ── Shared action button styles for dashboard approve/reject ── */
+    .btn-approve {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 6px 13px; border-radius: var(--radius-lg);
+      font-size: var(--text-xs); font-weight: 700; cursor: pointer;
+      border: none; background: var(--success-500); color: white;
+      box-shadow: 0 2px 6px rgba(16,185,129,0.3);
+      transition: var(--transition); white-space: nowrap;
+    }
+    .btn-approve:hover { background: #059669; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(16,185,129,0.4); }
+    .btn-reject {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 6px 13px; border-radius: var(--radius-lg);
+      font-size: var(--text-xs); font-weight: 700; cursor: pointer;
+      border: 1.5px solid var(--danger-500); background: transparent; color: var(--danger-600);
+      transition: var(--transition); white-space: nowrap;
+    }
+    .btn-reject:hover { background: var(--danger-500); color: white; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(239,68,68,0.3); }
+    .action-cell { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+  </style>
+</head>
+<body>
+
+<div class="app-layout">
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <a href="dashboard.html" class="sidebar-brand">
+      <img src="../assets/images/logo_usk_clean.png" alt="Logo USK" class="sidebar-logo-img" />
+      <div class="sidebar-brand-text">
+        <div class="site-name">PustakaTanyoe</div>
+        <div class="site-sub">Admin Control Center</div>
+      </div>
+    </a>
+
+    <div class="sidebar-nav">
+      <div class="sidebar-section-label">Manajemen Utama</div>
+      <a href="dashboard.html" class="sidebar-link active">
+        <span class="link-icon"><i class="fas fa-tachometer-alt"></i></span>
+        <span>Dashboard</span>
+      </a>
+      <a href="books.html" class="sidebar-link">
+        <span class="link-icon"><i class="fas fa-book"></i></span>
+        <span>Kelola Buku</span>
+      </a>
+      <a href="loans.html" class="sidebar-link">
+        <span class="link-icon"><i class="fas fa-clipboard-list"></i></span>
+        <span>Sirkulasi & Peminjaman</span>
+      </a>
+      <a href="members.html" class="sidebar-link">
+        <span class="link-icon"><i class="fas fa-users"></i></span>
+        <span>Kelola Anggota</span>
+      </a>
+
+      <div class="sidebar-section-label">Layanan & Keuangan</div>
+      <a href="fines.html" class="sidebar-link">
+        <span class="link-icon"><i class="fas fa-money-bill-wave"></i></span>
+        <span>Kelola Denda</span>
+      </a>
+      <a href="categories.html" class="sidebar-link">
+        <span class="link-icon"><i class="fas fa-tags"></i></span>
+        <span>Kategori Koleksi</span>
+      </a>
+      <a href="reports.html" class="sidebar-link">
+        <span class="link-icon"><i class="fas fa-chart-line"></i></span>
+        <span>Laporan & Statistik</span>
+      </a>
+    </div>
+
+    <div class="sidebar-footer" id="sidebarUser">
+      <!-- Dynamic user -->
+    </div>
+  </aside>
+
+  <!-- App Content -->
+  <div class="app-content">
+    <header class="app-header">
+      <div class="flex items-center gap-3">
+        <button class="btn btn-ghost btn-icon" id="sidebarToggle" onclick="document.getElementById('sidebar').classList.toggle('mobile-open')">
+          <i class="fas fa-bars"></i>
+        </button>
+        <h2 class="app-header-title">Executive Dashboard</h2>
+      </div>
+      <div class="app-header-actions">
+        <span class="badge badge-gold"><i class="fas fa-shield-alt"></i> Pustakawan USK</span>
+        <a href="../index.html" class="btn btn-outline btn-sm"><i class="fas fa-globe"></i> Portal Publik</a>
+      </div>
+    </header>
+
+    <main class="app-main">
+      <!-- 4 Stat Cards -->
+      <div class="grid grid-4 gap-5 mb-8">
+        <div class="stat-card stat-gold animate-fadeInUp delay-100">
+          <div class="stat-card-icon"><i class="fas fa-book"></i></div>
+          <div class="stat-number" id="dashTotalBooks">0</div>
+          <div class="stat-label">Total Judul Koleksi</div>
+          <div class="stat-trend up"><i class="fas fa-arrow-up"></i> Terdata di repositori</div>
+        </div>
+        <div class="stat-card stat-navy animate-fadeInUp delay-200">
+          <div class="stat-card-icon"><i class="fas fa-user-graduate"></i></div>
+          <div class="stat-number" id="dashTotalMembers">0</div>
+          <div class="stat-label">Anggota Mahasiswa</div>
+          <div class="stat-trend up"><i class="fas fa-check-circle"></i> Sivitas terverifikasi</div>
+        </div>
+        <div class="stat-card stat-green animate-fadeInUp delay-300">
+          <div class="stat-card-icon"><i class="fas fa-hand-holding-heart"></i></div>
+          <div class="stat-number" id="dashActiveLoans">0</div>
+          <div class="stat-label">Buku Sedang Dipinjam</div>
+          <div class="text-xs text-muted mt-2" id="dashPendingBadge">0 Menunggu Persetujuan</div>
+        </div>
+        <div class="stat-card stat-red animate-fadeInUp delay-400">
+          <div class="stat-card-icon"><i class="fas fa-receipt"></i></div>
+          <div class="stat-number" id="dashTotalFines">Rp 0</div>
+          <div class="stat-label">Total Denda Tercatat</div>
+          <div class="stat-trend down"><i class="fas fa-exclamation-circle"></i> Keterlambatan aktif</div>
+        </div>
+      </div>
+
+      <!-- Charts Section (MIT/Harvard Analytics style) -->
+      <div class="grid grid-2 gap-6 mb-8">
+        <div class="card">
+          <div class="card-header">
+            <h4 class="card-title" style="font-size:var(--text-base);"><i class="fas fa-chart-area text-gold"></i> Tren Sirkulasi Peminjaman (12 Bulan)</h4>
+          </div>
+          <div class="card-body">
+            <div class="chart-container" style="height: 260px;">
+              <canvas id="loansChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h4 class="card-title" style="font-size:var(--text-base);"><i class="fas fa-chart-pie text-gold"></i> Komposisi Kategori Buku</h4>
+          </div>
+          <div class="card-body">
+            <div class="chart-container" style="height: 260px;">
+              <canvas id="categoryChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pending Verifications Table -->
+      <div class="card mb-8">
+        <div class="card-header">
+          <div class="flex items-center gap-2">
+            <h4 class="card-title" style="font-size:var(--text-base);"><i class="fas fa-clock text-gold"></i> Permohonan Peminjaman Menunggu Persetujuan</h4>
+            <span class="badge badge-yellow" id="pendingCountBadge">0 Pending</span>
+          </div>
+          <a href="loans.html" class="btn btn-ghost btn-sm">Buka Kelola Sirkulasi <i class="fas fa-arrow-right"></i></a>
+        </div>
+        <div class="table-wrapper">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Mahasiswa Pemohon</th>
+                <th>Judul Buku</th>
+                <th>Tanggal Pengajuan</th>
+                <th>Stok Sisa</th>
+                <th class="text-right">Aksi Verifikasi</th>
+              </tr>
+            </thead>
+            <tbody id="pendingLoansTableBody">
+              <!-- Dynamic -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<div id="toastContainer" class="toast-container"></div>
+
+<!-- Scripts -->
+<script src="../js/patterns/singleton.js"></script>
+<script src="../js/patterns/observer.js"></script>
+<script src="../js/patterns/factory.js"></script>
+<script src="../js/patterns/strategy.js"></script>
+<script src="../js/patterns/decorator.js"></script>
+<script src="../js/data/books.js"></script>
+<script src="../js/data/users.js"></script>
+<script src="../js/data/loans.js"></script>
+<script src="../js/utils.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const session = requireAdmin('../login.html');
+  if (!session) return;
+
+  renderDashboardStats();
+  renderPendingTable();
+  initAnalyticsCharts();
+});
+
+function renderDashboardStats() {
+  const books = getBooks();
+  const users = getUsers().filter(u => u.role === 'user');
+  const loans = getLoans();
+
+  const activeLoans = loans.filter(l => l.status === 'active' || l.status === 'overdue');
+  const pendingLoans = loans.filter(l => l.status === 'pending');
+
+  let totalFines = 0;
+  loans.forEach(l => { totalFines += calculateFine(l); });
+
+  document.getElementById('dashTotalBooks').textContent = books.length;
+  document.getElementById('dashTotalMembers').textContent = users.length;
+  document.getElementById('dashActiveLoans').textContent = activeLoans.length;
+  document.getElementById('dashPendingBadge').textContent = `${pendingLoans.length} Menunggu Persetujuan`;
+  document.getElementById('pendingCountBadge').textContent = `${pendingLoans.length} Pending`;
+  document.getElementById('dashTotalFines').textContent = formatCurrency(totalFines);
+}
+
+function renderPendingTable() {
+  const pending = getLoans().filter(l => l.status === 'pending');
+  const tbody = document.getElementById('pendingLoansTableBody');
+
+  if (pending.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="5" class="text-center py-6 text-muted"><i class="fas fa-check-circle text-success"></i> Semua permohonan sirkulasi telah diverifikasi.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = pending.map(l => {
+    const book = getBookById(l.bookId);
+    const stockLeft = book ? (book.stock - (book.borrowed || 0)) : 0;
+    return `
+      <tr>
+        <td>
+          <div class="font-semibold text-navy">${l.userName}</div>
+          <div class="text-xs text-muted">ID: ${l.userId}</div>
+        </td>
+        <td>
+          <div class="font-semibold">${l.bookTitle}</div>
+          <div class="text-xs text-muted">${l.bookAuthor}</div>
+        </td>
+        <td>${formatDate(l.requestDate || l.borrowDate)}</td>
+        <td><span class="badge ${stockLeft > 0 ? 'badge-green' : 'badge-red'}">${stockLeft} eksemplar</span></td>
+        <td class="text-right">
+          <div class="action-cell">
+            <button class="btn-approve" onclick="handleApprove('${l.id}')"><i class="fas fa-check"></i> Setujui</button>
+            <button class="btn-reject"  onclick="handleReject('${l.id}')"><i class="fas fa-times"></i> Tolak</button>
+          </div>
+        </td>
+      </tr>`;
+  }).join('');
+}
+
+function handleApprove(loanId) {
+  const session = getCurrentSession();
+  const res = approveLoan(loanId, session.userId);
+  if (res.success) {
+    showToast('success', 'Disetujui', 'Permohonan peminjaman buku berhasil diverifikasi.');
+    renderDashboardStats();
+    renderPendingTable();
+  } else {
+    showToast('error', 'Gagal', res.message || 'Terjadi kesalahan.');
+  }
+}
+
+function handleReject(loanId) {
+  const res = rejectLoan(loanId, 'Ditolak oleh petugas.');
+  if (res.success) {
+    showToast('info', 'Ditolak', 'Permohonan peminjaman ditolak.');
+    renderDashboardStats();
+    renderPendingTable();
+  }
+}
+
+function initAnalyticsCharts() {
+  // Line chart: monthly borrowings
+  const ctxLoans = document.getElementById('loansChart').getContext('2d');
+  new Chart(ctxLoans, {
+    type: 'line',
+    data: {
+      labels: ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'],
+      datasets: [{
+        label: 'Frekuensi Peminjaman',
+        data: [45, 52, 78, 90, 85, 60, 40, 95, 110, 130, 125, 98],
+        borderColor: '#C9A227',
+        backgroundColor: 'rgba(201, 162, 39, 0.1)',
+        fill: true,
+        tension: 0.35,
+        borderWidth: 2.5
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: true } }
+    }
+  });
+
+  // Doughnut chart: categories
+  const books = getBooks();
+  const catCounts = {};
+  books.forEach(b => { catCounts[b.category] = (catCounts[b.category] || 0) + 1; });
+
+  const ctxCat = document.getElementById('categoryChart').getContext('2d');
+  new Chart(ctxCat, {
+    type: 'doughnut',
+    data: {
+      labels: Object.keys(catCounts).slice(0, 6),
+      datasets: [{
+        data: Object.values(catCounts).slice(0, 6),
+        backgroundColor: ['#C9A227', '#1B2B4B', '#1A472A', '#3B82F6', '#EF4444', '#8B5CF6']
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { position: 'right' } }
+    }
+  });
+}
+</script>
+</body>
+</html>
