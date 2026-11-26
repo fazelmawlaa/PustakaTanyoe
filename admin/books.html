@@ -222,6 +222,8 @@
 <!-- Scripts -->
 <script src="../js/patterns/singleton.js"></script>
 <script src="../js/patterns/observer.js"></script>
+<script src="../js/patterns/state.js"></script>
+<script src="../js/patterns/facade.js"></script>
 <script src="../js/patterns/factory.js"></script>
 <script src="../js/patterns/strategy.js"></script>
 <script src="../js/patterns/decorator.js"></script>
@@ -276,7 +278,7 @@ function renderBooksTable() {
         <td>
           <div style="display:flex; align-items:center; gap: 12px;">
             <div style="width: 38px; height: 50px; border-radius: 4px; overflow:hidden; background: var(--gray-200); flex-shrink:0; box-shadow: 0 1px 3px rgba(0,0,0,0.12); position:relative;">
-              <img src="${coverSrc}" alt="${b.title}" style="width:100%; height:100%; object-fit:cover;" onerror="this.src='../assets/images/covers/bk001.svg';" />
+              <img src="${coverSrc}" alt="${b.title}" style="width:100%; height:100%; object-fit:cover;" onerror="this.src='../assets/images/covers/bk001.jpg';" />
             </div>
             <div>
               <div class="font-semibold text-navy">${b.title}</div>

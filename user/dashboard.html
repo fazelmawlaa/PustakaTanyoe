@@ -159,9 +159,9 @@
     <div class="quick-stat-grid">
       <div class="stat-card stat-gold animate-fadeInUp delay-100">
         <div class="stat-card-icon"><i class="fas fa-book-reader"></i></div>
-        <div class="stat-number" id="statActiveLoans">0</div>
+        <div class="stat-number" id="statActiveLoans">0 / 3</div>
         <div class="stat-label">Buku Sedang Dipinjam</div>
-        <div class="text-xs text-muted mt-2">Maksimal kuota: 3 buku</div>
+        <div class="text-xs text-muted mt-2" id="statActiveQuotaLabel">Maksimal kuota: 3 buku</div>
       </div>
       <div class="stat-card stat-green animate-fadeInUp delay-200">
         <div class="stat-card-icon"><i class="fas fa-check-double"></i></div>
@@ -257,6 +257,8 @@
 <!-- Scripts -->
 <script src="../js/patterns/singleton.js"></script>
 <script src="../js/patterns/observer.js"></script>
+<script src="../js/patterns/state.js"></script>
+<script src="../js/patterns/facade.js"></script>
 <script src="../js/patterns/factory.js"></script>
 <script src="../js/patterns/strategy.js"></script>
 <script src="../js/patterns/decorator.js"></script>
@@ -287,7 +289,15 @@ document.addEventListener('DOMContentLoaded', () => {
     totalFines += calculateFine(l);
   });
 
-  document.getElementById('statActiveLoans').textContent = activeLoans.length;
+  document.getElementById('statActiveLoans').textContent = `${activeLoans.length} / 3`;
+  const quotaLabel = document.getElementById('statActiveQuotaLabel');
+  if (quotaLabel) {
+    if (activeLoans.length >= 3) {
+      quotaLabel.innerHTML = `<span class="badge badge-red" style="font-size:0.65rem;"><i class="fas fa-ban"></i> Kuota Penuh (3/3)</span>`;
+    } else {
+      quotaLabel.innerHTML = `<span class="text-success font-semibold" style="font-size:0.75rem;"><i class="fas fa-check-circle"></i> Sisa kuota: ${3 - activeLoans.length} buku</span>`;
+    }
+  }
   document.getElementById('statReturnedLoans').textContent = returnedLoans.length;
   document.getElementById('statWishlist').textContent = wishlist.length;
   document.getElementById('statFines').textContent = formatCurrency(totalFines);

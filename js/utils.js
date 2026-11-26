@@ -120,13 +120,41 @@ function renderStars(rating, max = 5) {
 }
 
 // ── Book Cover Gradient & Source Helper ──
+const DEFAULT_BOOK_COVERS = {
+  bk001: 'assets/images/covers/bk001.jpg',
+  bk002: 'assets/images/covers/bk002.jpeg',
+  bk003: 'assets/images/covers/bk003.jpg',
+  bk004: 'assets/images/covers/bk004.jpeg',
+  bk005: 'assets/images/covers/bk005.jpeg',
+  bk006: 'assets/images/covers/bk006.jpeg',
+  bk007: 'assets/images/covers/bk007.jpeg',
+  bk008: 'assets/images/covers/bk008.jpeg',
+  bk009: 'assets/images/covers/bk009.jpeg',
+  bk010: 'assets/images/covers/bk010.jpeg',
+  bk011: 'assets/images/covers/bk011.jpg',
+  bk012: 'assets/images/covers/bk012.jpg',
+  bk013: 'assets/images/covers/bk013.jpeg',
+  bk014: 'assets/images/covers/bk014.jpeg',
+  bk015: 'assets/images/covers/bk015.jpg',
+  bk016: 'assets/images/covers/bk016.jpg',
+  bk017: 'assets/images/covers/bk017.jpeg',
+  bk018: 'assets/images/covers/bk018.jpeg',
+  bk019: 'assets/images/covers/bk019.jpg',
+  bk020: 'assets/images/covers/bk020.jpg',
+  bk021: 'assets/images/covers/bk021.jpeg',
+  bk022: 'assets/images/covers/bk022.jpeg'
+};
+
 function getBookCoverGradient(book) {
   return `linear-gradient(135deg, ${book.coverColor || '#1B2B4B'} 0%, ${book.coverColor2 || '#0A1428'} 100%)`;
 }
 
 function getBookCoverSrc(book) {
   if (!book) return '';
-  let imgPath = book.coverImage || `assets/images/covers/${book.id || 'bk001'}.svg`;
+  let imgPath = book.coverImage;
+  if (!imgPath || imgPath.endsWith('.svg')) {
+    imgPath = (book.id && DEFAULT_BOOK_COVERS[book.id]) ? DEFAULT_BOOK_COVERS[book.id] : 'assets/images/covers/bk001.jpg';
+  }
   if (imgPath.startsWith('http://') || imgPath.startsWith('https://') || imgPath.startsWith('data:')) {
     return imgPath;
   }

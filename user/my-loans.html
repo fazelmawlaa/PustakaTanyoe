@@ -66,10 +66,13 @@
         <h1 style="font-family: var(--font-heading); font-size: var(--text-3xl); color: var(--navy-800); margin-bottom: 4px;">
           Riwayat & Peminjaman Saya
         </h1>
-        <p class="text-sm text-muted">Pantau status persetujuan, batas waktu jatuh tempo, dan perpanjangan online.</p>
+        <p class="text-sm text-muted">Pantau status persetujuan, batas waktu jatuh tempo (7 hari kalender), dan perpanjangan online.</p>
       </div>
-      <a href="catalog.html" class="btn btn-primary"><i class="fas fa-plus"></i> Pinjam Buku Lain</a>
+      <a href="catalog.html" class="btn btn-primary" id="btnBorrowMore"><i class="fas fa-plus"></i> Pinjam Buku Lain</a>
     </div>
+
+    <!-- Quota & Policy Banner -->
+    <div id="quotaPolicyBanner" class="mb-6"></div>
 
     <!-- Tabs -->
     <div class="tabs">
@@ -131,6 +134,8 @@
 <!-- Scripts -->
 <script src="../js/patterns/singleton.js"></script>
 <script src="../js/patterns/observer.js"></script>
+<script src="../js/patterns/state.js"></script>
+<script src="../js/patterns/facade.js"></script>
 <script src="../js/patterns/factory.js"></script>
 <script src="../js/patterns/strategy.js"></script>
 <script src="../js/patterns/decorator.js"></script>
@@ -160,6 +165,59 @@ function loadUserLoans() {
   const loans = getLoansByUser(currentUserId);
   const active = loans.filter(l => ['active', 'overdue', 'pending'].includes(l.status));
   const history = loans.filter(l => ['returned', 'rejected'].includes(l.status));
+
+  // Render Quota & Policy Banner
+  const activeCount = active.length;
+  const bannerEl = document.getElementById('quotaPolicyBanner');
+  const btnBorrowMore = document.getElementById('btnBorrowMore');
+
+  if (bannerEl) {
+    if (activeCount >= 3) {
+      bannerEl.innerHTML = `
+        <div class="card p-4" style="background:#FEF2F2; border: 1.5px solid #FCA5A5; border-radius: var(--radius-xl);">
+          <div class="flex items-center justify-between flex-wrap gap-3">
+            <div>
+              <div class="font-bold text-danger flex items-center gap-2">
+                <i class="fas fa-exclamation-triangle"></i> Batas Kuota Tercapai (3 / 3 Buku Sedang Dipinjam/Menunggu)
+              </div>
+              <p class="text-xs text-muted mt-1">
+                Sesuai <strong>Ketentuan Perpustakaan USK</strong>, batas peminjaman adalah maksimal <strong>3 buku sekaligus</strong> dengan durasi <strong>7 hari kalender</strong> (Denda Rp 1.000/hari/buku). Harap kembalikan buku fisik ke perpustakaan untuk membuka kuota peminjaman baru.
+              </p>
+            </div>
+            <span class="badge badge-red font-bold px-3 py-2">Kuota Penuh (3/3)</span>
+          </div>
+        </div>`;
+    } else {
+      bannerEl.innerHTML = `
+        <div class="card p-4" style="background:#F0FDF4; border: 1.5px solid #86EFAC; border-radius: var(--radius-xl);">
+          <div class="flex items-center justify-between flex-wrap gap-3">
+            <div>
+              <div class="font-bold text-navy flex items-center gap-2" style="color:#166534;">
+                <i class="fas fa-info-circle text-success"></i> Ketentuan Pustaka USK: Maksimal 3 Buku Sekaligus • Durasi 7 Hari Kalender • Denda Rp 1.000/Hari
+              </div>
+              <p class="text-xs text-muted mt-1">
+                Status saat ini: Anda sedang meminjam/mengajukan <strong>${activeCount} buku</strong>. Masih tersedia kuota peminjaman untuk <strong>${3 - activeCount} buku</strong> lagi.
+              </p>
+            </div>
+            <span class="badge badge-green font-bold px-3 py-2">Sisa Kuota: ${3 - activeCount} / 3 Buku</span>
+          </div>
+        </div>`;
+    }
+  }
+
+  if (btnBorrowMore) {
+    if (activeCount >= 3) {
+      btnBorrowMore.classList.add('disabled');
+      btnBorrowMore.style.pointerEvents = 'none';
+      btnBorrowMore.style.opacity = '0.6';
+      btnBorrowMore.innerHTML = '<i class="fas fa-ban"></i> Kuota Penuh (3/3)';
+    } else {
+      btnBorrowMore.classList.remove('disabled');
+      btnBorrowMore.style.pointerEvents = 'auto';
+      btnBorrowMore.style.opacity = '1';
+      btnBorrowMore.innerHTML = '<i class="fas fa-plus"></i> Pinjam Buku Lain';
+    }
+  }
 
   // Active
   const activeTbody = document.getElementById('activeLoansTableBody');

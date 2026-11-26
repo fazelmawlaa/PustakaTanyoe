@@ -347,14 +347,18 @@ function initBookData() {
     let updated = false;
     const sampleMap = new Map(SAMPLE_BOOKS.map(b => [b.id, b]));
     parsed.forEach(b => {
-      // Only set default if missing; do NOT overwrite admin edits!
-      if (!b.coverImage) {
-        const sample = sampleMap.get(b.id);
-        b.coverImage = sample ? sample.coverImage : `assets/images/covers/${b.id}.svg`;
+      const sample = sampleMap.get(b.id);
+      // Synchronize coverImage to actual image file in assets/images/covers/
+      if (sample) {
+        if (!b.coverImage || b.coverImage.endsWith('.svg') || (!b.coverImage.startsWith('data:') && b.coverImage !== sample.coverImage)) {
+          b.coverImage = sample.coverImage;
+          updated = true;
+        }
+      } else if (!b.coverImage || b.coverImage.endsWith('.svg')) {
+        b.coverImage = 'assets/images/covers/bk001.jpg';
         updated = true;
       }
       if (b.borrowCount === undefined) {
-        const sample = sampleMap.get(b.id);
         b.borrowCount = sample ? sample.borrowCount : 0;
         updated = true;
       }

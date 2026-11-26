@@ -176,6 +176,8 @@
 <!-- Scripts -->
 <script src="../js/patterns/singleton.js"></script>
 <script src="../js/patterns/observer.js"></script>
+<script src="../js/patterns/state.js"></script>
+<script src="../js/patterns/facade.js"></script>
 <script src="../js/patterns/factory.js"></script>
 <script src="../js/patterns/strategy.js"></script>
 <script src="../js/patterns/decorator.js"></script>
@@ -216,12 +218,14 @@ function renderLoansTable() {
 
   tbody.innerHTML = loans.map(l => {
     const fine = calculateFine(l);
+    const userLoans = typeof getActiveLoans === 'function' ? getActiveLoans(l.userId, true) : [];
+    const quotaDisplay = `<span class="badge ${userLoans.length >= 3 ? 'badge-red' : 'badge-gray'}" style="font-size:0.6rem; padding: 1px 5px;">${userLoans.length}/3 Buku</span>`;
     return `
       <tr>
         <td class="font-mono text-xs">${l.id}</td>
         <td>
           <div class="font-semibold text-navy">${l.userName}</div>
-          <div class="text-xs text-muted">ID: ${l.userId}</div>
+          <div class="text-xs text-muted flex items-center gap-1 mt-1"><span>ID: ${l.userId}</span> • ${quotaDisplay}</div>
         </td>
         <td>
           <div class="font-semibold">${l.bookTitle}</div>

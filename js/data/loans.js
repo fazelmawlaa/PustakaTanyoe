@@ -185,28 +185,60 @@ function getLoansByUser(userId) {
   return getLoans().filter(l => l.userId === userId);
 }
 
-function getActiveLoans(userId = null) {
+function getActiveLoans(userId = null, includePending = true) {
   const loans = getLoans();
-  const active = loans.filter(l => l.status === 'active' || l.status === 'overdue');
+  const validStatuses = includePending ? ['active', 'overdue', 'pending'] : ['active', 'overdue'];
+  const active = loans.filter(l => validStatuses.includes(l.status));
   return userId ? active.filter(l => l.userId === userId) : active;
 }
 
-function requestLoan(userId, bookId) {
+function requestLoan(userId, bookId, notes = '', plannedBorrowDate = null) {
   const user = getUserById(userId);
   const book = getBookById(bookId);
   const loans = getLoans();
 
   if (!user || !book) return { success: false, message: 'Data tidak valid.' };
-  if (user.memberStatus === 'suspended') return { success: false, message: 'Akun Anda ditangguhkan.' };
+  if (user.memberStatus === 'suspended') return { success: false, message: 'Akun Anda sedang ditangguhkan.' };
 
-  const userActive = getActiveLoans(userId);
-  if (userActive.length >= 3) return { success: false, message: 'Batas peminjaman 3 buku tercapai.' };
+  // Rule 1: Maksimal 3 buku sekaligus (termasuk yang sedang dipinjam & menunggu persetujuan)
+  const userActive = getActiveLoans(userId, true);
+  if (userActive.length >= 3) {
+    return { 
+      success: false, 
+      message: 'Batas peminjaman tercapai: Anda sudah meminjam/mengajukan 3 buku. Sesuai ketentuan perpustakaan USK, maksimal peminjaman adalah 3 buku sekaligus.' 
+    };
+  }
+
+  // Cek jika ada buku yang terlambat (overdue)
+  const hasOverdue = userActive.some(l => l.status === 'overdue');
+  if (hasOverdue) {
+    return {
+      success: false,
+      message: 'Anda memiliki peminjaman buku yang melewati batas waktu (terlambat). Harap kembalikan buku dan selesaikan denda terlebih dahulu.'
+    };
+  }
 
   const alreadyBorrowed = loans.find(l => l.userId === userId && l.bookId === bookId && ['active','overdue','pending'].includes(l.status));
-  if (alreadyBorrowed) return { success: false, message: 'Anda sudah meminjam buku ini.' };
+  if (alreadyBorrowed) {
+    const statusText = alreadyBorrowed.status === 'pending' ? 'menunggu persetujuan' : 'sedang Anda pinjam';
+    return { success: false, message: `Buku ini sudah ${statusText}.` };
+  }
 
   const avail = (book.stock || 0) - (book.borrowed || 0);
-  if (avail <= 0) return { success: false, message: 'Buku tidak tersedia saat ini.' };
+  if (avail <= 0) return { success: false, message: 'Buku tidak tersedia saat ini (stok habis).' };
+
+  // Rule 2: Durasi masa pinjam tepat 7 hari kalender
+  let startD = new Date();
+  if (plannedBorrowDate) {
+    const parts = plannedBorrowDate.split('-');
+    if (parts.length === 3) {
+      startD = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10), 8, 0, 0);
+    } else {
+      startD = new Date(plannedBorrowDate);
+    }
+  }
+  const dueD = new Date(startD);
+  dueD.setDate(dueD.getDate() + 7);
 
   const newLoan = {
     id: `ln${String(Date.now()).slice(-6)}`,
@@ -215,13 +247,13 @@ function requestLoan(userId, bookId) {
     bookId,
     bookTitle: book.title,
     bookAuthor: book.author,
-    borrowDate: null,
-    dueDate: null,
+    borrowDate: startD.toISOString(),
+    dueDate: dueD.toISOString(),
     returnDate: null,
     status: 'pending',
     renewalCount: 0,
     approvedBy: null,
-    notes: '',
+    notes: notes || '',
     fine: 0,
     requestDate: new Date().toISOString(),
   };
@@ -236,15 +268,26 @@ function approveLoan(loanId, adminId) {
   if (idx === -1) return { success: false, message: 'Peminjaman tidak ditemukan.' };
   if (loans[idx].status !== 'pending') return { success: false, message: 'Status tidak valid.' };
 
+  const targetUserId = loans[idx].userId;
+  // Cek apakah mahasiswa yang bersangkutan sudah memiliki 3 buku aktif
+  const currentActiveLoans = loans.filter(l => l.userId === targetUserId && ['active', 'overdue'].includes(l.status));
+  if (currentActiveLoans.length >= 3) {
+    return { success: false, message: 'Gagal: Mahasiswa ini sudah mencapai kuota maksimal 3 buku aktif.' };
+  }
+
   const book = getBookById(loans[idx].bookId);
   if (!book) return { success: false };
 
   const avail = (book.stock || 0) - (book.borrowed || 0);
   if (avail <= 0) return { success: false, message: 'Stok buku habis.' };
 
-  const borrowDate = new Date();
-  const dueDate = new Date();
-  dueDate.setDate(dueDate.getDate() + 7);
+  // Preserve borrower's chosen borrowDate and dueDate (+7 calendar days)
+  let borrowDate = loans[idx].borrowDate ? new Date(loans[idx].borrowDate) : new Date();
+  let dueDate = loans[idx].dueDate ? new Date(loans[idx].dueDate) : null;
+  if (!dueDate || isNaN(dueDate.getTime())) {
+    dueDate = new Date(borrowDate);
+    dueDate.setDate(dueDate.getDate() + 7);
+  }
 
   loans[idx] = {
     ...loans[idx],

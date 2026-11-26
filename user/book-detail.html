@@ -127,6 +127,9 @@
           Memuat deskripsi buku...
         </p>
 
+        <!-- Quota & Policy Notice -->
+        <div id="userQuotaNotice" style="display:none; margin-bottom: var(--space-4);"></div>
+
         <!-- Action Buttons -->
         <div class="flex gap-4 flex-wrap mb-8">
           <button id="btnBorrowBook" class="btn btn-primary btn-lg" onclick="handleBorrowModal()">
@@ -140,15 +143,17 @@
         <!-- Specifications Table -->
         <div class="card" style="border: 1px solid var(--color-border); box-shadow: none;">
           <div class="card-header" style="background:var(--gray-50);">
-            <h5 style="font-size:var(--text-sm);"><i class="fas fa-list-ul text-gold"></i> Metadata & Spesifikasi Katalog</h5>
+            <h5 style="font-size:var(--text-sm);"><i class="fas fa-list-ul text-gold"></i> Ketentuan Peminjaman & Spesifikasi Katalog</h5>
           </div>
           <div class="card-body p-4">
-            <div class="spec-item"><span class="spec-label">Nomor ISBN</span><span class="spec-value" id="specISBN">-</span></div>
+            <div class="spec-item"><span class="spec-label">Maksimal Peminjaman</span><span class="spec-value font-semibold text-navy">3 Buku Sekaligus</span></div>
+            <div class="spec-item"><span class="spec-label">Durasi Masa Pinjam</span><span class="spec-value font-semibold text-navy">7 Hari Kalender (Maks. 2x Perpanjangan)</span></div>
+            <div class="spec-item"><span class="spec-label">Denda Keterlambatan</span><span class="spec-value text-danger font-semibold">Rp 1.000 / hari / buku</span></div>
+            <div class="spec-item"><span class="spec-label">Lokasi Pengambilan</span><span class="spec-value">Gedung Perpustakaan Pusat USK, Lantai 2</span></div>
+            <div class="spec-item"><span class="spec-label">Nomor ISBN</span><span class="spec-value font-mono" id="specISBN">-</span></div>
             <div class="spec-item"><span class="spec-label">Penerbit</span><span class="spec-value" id="specPublisher">-</span></div>
             <div class="spec-item"><span class="spec-label">Tahun Publikasi</span><span class="spec-value" id="specYear">-</span></div>
             <div class="spec-item"><span class="spec-label">Klasifikasi Bidang</span><span class="spec-value" id="specCategory">-</span></div>
-            <div class="spec-item"><span class="spec-label">Lokasi Koleksi</span><span class="spec-value">Gedung Perpustakaan Pusat USK, Lantai 2</span></div>
-            <div class="spec-item"><span class="spec-label">Batas Peminjaman</span><span class="spec-value">7 Hari Kalender (Maks. 2x Perpanjangan)</span></div>
           </div>
         </div>
 
@@ -160,22 +165,59 @@
 
 <!-- Modal Ajukan Pinjam -->
 <div class="modal-overlay" id="borrowModal">
-  <div class="modal">
+  <div class="modal" style="max-width: 520px; width: 95%;">
     <div class="modal-header">
       <h3 class="modal-title"><i class="fas fa-book-reader text-gold"></i> Konfirmasi Peminjaman Buku</h3>
       <button class="modal-close" data-modal-close>&times;</button>
     </div>
     <div class="modal-body">
-      <div style="background:var(--gold-50); border: 1px solid var(--gold-200); border-radius: var(--radius-lg); padding: var(--space-4); margin-bottom: var(--space-5);">
+      <!-- Info Ringkas Buku -->
+      <div style="background:var(--gold-50); border: 1px solid var(--gold-200); border-radius: var(--radius-lg); padding: var(--space-4); margin-bottom: var(--space-4);">
         <div class="font-semibold text-sm" style="color:var(--navy-800);" id="modalBookTitle">Judul Buku</div>
         <div class="text-xs text-muted" id="modalBookAuthor">Penulis</div>
       </div>
-      <p class="text-sm text-muted mb-4">
-        Dengan mengajukan peminjaman, permohonan Anda akan diverifikasi oleh pustakawan USK. Pastikan mengambil buku di perpustakaan fisik setelah status disetujui.
+      
+      <p class="text-xs text-muted mb-3">
+        Tentukan hari rencana Anda mulai meminjam/mengambil buku. Sistem akan langsung menghitung perkiraan batas pengembalian (maksimal 7 hari kalender):
       </p>
-      <div class="form-group">
-        <label class="form-label">Catatan Pengambilan (Opsional)</label>
-        <textarea id="borrowNotes" class="form-control" placeholder="Contoh: Akan diambil pukul 14.00 WIB"></textarea>
+
+      <!-- Input Tanggal Rencana Pinjam -->
+      <div class="form-group mb-3">
+        <label class="form-label font-semibold" for="borrowStartDate" style="display:flex; justify-content:space-between; align-items:center;">
+          <span><i class="fas fa-calendar-alt text-gold"></i> Ingin Dipinjam Hari / Tanggal:</span>
+          <span class="text-xs text-muted font-normal">Batas: 7 Hari Kalender</span>
+        </label>
+        <input type="date" id="borrowStartDate" class="form-control" onchange="updateEstimatedDueDate()" required style="font-size: 0.95rem; font-weight: 600;" />
+      </div>
+
+      <!-- Kotak Perkiraan Tanggal Pengembalian (Live Output) -->
+      <div id="borrowPeriodBox" style="background: #F0FDF4; border: 1.5px solid #86EFAC; border-radius: var(--radius-lg); padding: 14px 16px; margin-bottom: var(--space-4);">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 8px;">
+          <span style="font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #166534;">
+            <i class="fas fa-clock"></i> Estimasi Masa Peminjaman
+          </span>
+          <span class="badge badge-green" style="font-size: 0.7rem; font-weight: 700;">7 Hari Kalender</span>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+          <div style="background: white; padding: 10px 12px; border-radius: 8px; border: 1px solid #DCFCE7;">
+            <div style="font-size: 0.7rem; color: var(--gray-500); margin-bottom: 3px;">Mulai Pinjam</div>
+            <div id="displayStartDateText" style="font-weight: 700; font-size: 0.85rem; color: var(--navy-800);">-</div>
+          </div>
+          <div style="background: white; padding: 10px 12px; border-radius: 8px; border: 1px solid #BBF7D0;">
+            <div style="font-size: 0.7rem; color: var(--gray-500); margin-bottom: 3px;">Perkiraan Sampai Tanggal</div>
+            <div id="displayDueDateText" style="font-weight: 700; font-size: 0.85rem; color: #DC2626;">-</div>
+          </div>
+        </div>
+        <div style="margin-top: 8px; font-size: 0.72rem; color: #15803D; display:flex; align-items:center; gap: 5px;">
+          <i class="fas fa-info-circle"></i>
+          <span>Buku wajib dikembalikan sebelum tanggal jatuh tempo di atas untuk menghindari denda.</span>
+        </div>
+      </div>
+
+      <!-- Catatan Pengambilan (Opsional) -->
+      <div class="form-group mb-0">
+        <label class="form-label" for="borrowNotes">Catatan Pengambilan (Opsional)</label>
+        <textarea id="borrowNotes" class="form-control" rows="2" placeholder="Contoh: Akan diambil di perpustakaan fisik pukul 14.00 WIB"></textarea>
       </div>
     </div>
     <div class="modal-footer">
@@ -190,6 +232,8 @@
 <!-- Scripts -->
 <script src="../js/patterns/singleton.js"></script>
 <script src="../js/patterns/observer.js"></script>
+<script src="../js/patterns/state.js"></script>
+<script src="../js/patterns/facade.js"></script>
 <script src="../js/patterns/factory.js"></script>
 <script src="../js/patterns/strategy.js"></script>
 <script src="../js/patterns/decorator.js"></script>
@@ -253,12 +297,120 @@ function renderBookDetails() {
   // Rating
   document.getElementById('ratingArea').innerHTML = renderStars(b.rating) + ` <span class="text-sm text-muted">Berdasarkan ${b.ratingCount} ulasan mahasiswa</span>`;
 
-  // Borrow button check
+  // Borrow button & quota checks
+  const btn = document.getElementById('btnBorrowBook');
+  const noticeBox = document.getElementById('userQuotaNotice');
+  const session = getCurrentSession();
+
   if (avail <= 0) {
-    const btn = document.getElementById('btnBorrowBook');
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-ban"></i> Buku Sedang Habis Dipinjam';
+    if (noticeBox) {
+      noticeBox.style.display = 'block';
+      noticeBox.innerHTML = `
+        <div class="alert alert-warning" style="border-radius: var(--radius-lg); font-size: var(--text-xs);">
+          <i class="fas fa-exclamation-circle text-warning"></i> Seluruh eksemplar buku ini sedang dipinjam oleh mahasiswa lain. Anda dapat memasukkannya ke <strong>Wishlist</strong> untuk dipantau.
+        </div>`;
+    }
+    return;
   }
+
+  if (session && session.role === 'user') {
+    const userLoans = typeof getActiveLoans === 'function' ? getActiveLoans(session.userId, true) : [];
+    const alreadyBorrowed = userLoans.find(l => l.bookId === b.id);
+    const hasOverdue = userLoans.some(l => l.status === 'overdue');
+
+    if (alreadyBorrowed) {
+      btn.disabled = true;
+      btn.classList.remove('btn-primary');
+      btn.classList.add('btn-ghost');
+      btn.style.border = '1.5px solid var(--gold-400)';
+      btn.style.color = 'var(--gold-700)';
+      btn.style.background = 'var(--gold-50)';
+      const isPending = alreadyBorrowed.status === 'pending';
+      btn.innerHTML = isPending 
+        ? '<i class="fas fa-clock text-warning"></i> Menunggu Persetujuan Admin' 
+        : '<i class="fas fa-book-reader text-success"></i> Sedang Anda Pinjam';
+
+      if (noticeBox) {
+        noticeBox.style.display = 'block';
+        noticeBox.innerHTML = `
+          <div class="alert alert-info" style="border-radius: var(--radius-lg); font-size: var(--text-xs);">
+            <i class="fas fa-info-circle text-info"></i> Anda telah ${isPending ? 'mengajukan permohonan pinjam untuk' : 'sedang meminjam'} buku ini. Pantau statusnya di menu <a href="my-loans.html" class="font-bold underline text-navy">Peminjaman Saya</a>.
+          </div>`;
+      }
+    } else if (hasOverdue) {
+      btn.disabled = true;
+      btn.classList.remove('btn-primary');
+      btn.classList.add('btn-danger');
+      btn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Selesaikan Denda Keterlambatan';
+
+      if (noticeBox) {
+        noticeBox.style.display = 'block';
+        noticeBox.innerHTML = `
+          <div class="alert alert-danger" style="border-radius: var(--radius-lg); font-size: var(--text-xs);">
+            <i class="fas fa-exclamation-triangle"></i> <strong>Peminjaman Ditahan:</strong> Anda memiliki buku yang telah melewati batas 7 hari (terlambat). Sesuai ketentuan, harap kembalikan buku dan selesaikan denda Rp 1.000/hari di <a href="my-loans.html" class="font-bold underline">Peminjaman Saya</a>.
+          </div>`;
+      }
+    } else if (userLoans.length >= 3) {
+      btn.disabled = true;
+      btn.classList.remove('btn-primary');
+      btn.classList.add('btn-danger');
+      btn.innerHTML = '<i class="fas fa-ban"></i> Kuota Peminjaman Penuh (3/3 Buku)';
+
+      if (noticeBox) {
+        noticeBox.style.display = 'block';
+        noticeBox.innerHTML = `
+          <div class="alert alert-warning" style="border-radius: var(--radius-lg); font-size: var(--text-xs);">
+            <i class="fas fa-exclamation-triangle text-warning"></i> <strong>Batas Kuota Tercapai:</strong> Sesuai ketentuan perpustakaan USK, mahasiswa hanya dapat meminjam maksimal <strong>3 buku sekaligus</strong> (saat ini aktif: <strong>3/3 buku</strong>). Kembalikan buku sebelumnya di <a href="my-loans.html" class="font-bold underline text-navy">Peminjaman Saya</a> untuk meminjam buku ini.
+          </div>`;
+      }
+    } else {
+      // Quota is available
+      if (noticeBox) {
+        noticeBox.style.display = 'block';
+        const sisa = 3 - userLoans.length;
+        noticeBox.innerHTML = `
+          <div class="alert alert-info" style="border-radius: var(--radius-lg); font-size: var(--text-xs); background: #F0FDF4; border: 1px solid #86EFAC; color: #166534;">
+            <i class="fas fa-check-circle text-success"></i> Sisa kuota peminjaman Anda: <strong>${sisa} dari 3 buku</strong> (Maks. 7 hari kalender).
+          </div>`;
+      }
+    }
+  }
+}
+
+function getTodayDateStr() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function updateEstimatedDueDate() {
+  const input = document.getElementById('borrowStartDate');
+  let selectedVal = input ? input.value : null;
+  if (!selectedVal) {
+    selectedVal = getTodayDateStr();
+    if (input) input.value = selectedVal;
+  }
+
+  // Parse YYYY-MM-DD
+  const parts = selectedVal.split('-');
+  const startDate = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+
+  // Add 7 calendar days
+  const dueDate = new Date(startDate);
+  dueDate.setDate(dueDate.getDate() + 7);
+
+  const options = { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' };
+  const startFormatted = startDate.toLocaleDateString('id-ID', options);
+  const dueFormatted = dueDate.toLocaleDateString('id-ID', options);
+
+  const startEl = document.getElementById('displayStartDateText');
+  const dueEl = document.getElementById('displayDueDateText');
+  if (startEl) startEl.textContent = startFormatted;
+  if (dueEl) dueEl.textContent = dueFormatted;
 }
 
 function handleBorrowModal() {
@@ -269,8 +421,36 @@ function handleBorrowModal() {
     return;
   }
 
+  if (session.role === 'admin') {
+    showToast('info', 'Akun Administrator', 'Administrator tidak mengajukan peminjaman buku.');
+    return;
+  }
+
+  // Pre-check quota limit (3 books)
+  const userLoans = typeof getActiveLoans === 'function' ? getActiveLoans(session.userId, true) : [];
+  if (userLoans.length >= 3) {
+    showToast('warning', 'Batas Kuota Tercapai', 'Anda sudah mencapai batas maksimal 3 buku sekaligus.');
+    return;
+  }
+
+  const already = userLoans.find(l => l.bookId === currentBook.id);
+  if (already) {
+    showToast('warning', 'Buku Sudah Diajukan', 'Anda sudah meminjam atau mengajukan buku ini.');
+    return;
+  }
+
   document.getElementById('modalBookTitle').textContent = currentBook.title;
   document.getElementById('modalBookAuthor').textContent = currentBook.author;
+
+  // Set min & default value to today
+  const todayStr = getTodayDateStr();
+  const dateInput = document.getElementById('borrowStartDate');
+  if (dateInput) {
+    dateInput.min = todayStr;
+    dateInput.value = todayStr;
+  }
+
+  updateEstimatedDueDate();
   openModal('borrowModal');
 }
 
@@ -278,11 +458,15 @@ function submitBorrowRequest() {
   const session = getCurrentSession();
   if (!session || !currentBook) return;
 
+  const dateInput = document.getElementById('borrowStartDate');
+  const borrowDateVal = dateInput ? dateInput.value : getTodayDateStr();
+  const notesVal = document.getElementById('borrowNotes') ? document.getElementById('borrowNotes').value.trim() : '';
+
   const btn = document.getElementById('btnSubmitBorrow');
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner spinner-sm"></span> Mengirim...';
 
-  const res = requestLoan(session.userId, currentBook.id);
+  const res = requestLoan(session.userId, currentBook.id, notesVal, borrowDateVal);
   closeModal('borrowModal');
   btn.disabled = false;
   btn.innerHTML = 'Konfirmasi Pengajuan';
@@ -292,7 +476,7 @@ function submitBorrowRequest() {
     notificationSystem.addNotification({
       type: 'info',
       title: 'Pengajuan Peminjaman Dikirim',
-      message: `Peminjaman "${currentBook.title}" menunggu persetujuan admin.`,
+      message: `Peminjaman "${currentBook.title}" (Rencana: ${formatDateShort(res.loan.borrowDate)} s.d. ${formatDateShort(res.loan.dueDate)}) menunggu persetujuan admin.`,
       userId: session.userId,
       bookId: currentBook.id
     });

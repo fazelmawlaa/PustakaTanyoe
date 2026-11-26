@@ -1,73 +1,181 @@
 // ============================================================
 // PustakaTanyoe — Design Patterns
-// 2. OBSERVER: Notification & Event System
+// 11.1 OBSERVER PATTERN: Automatic Notification & Event System
 // ============================================================
 
-class NotificationSystem {
+/**
+ * Interface / Base Class Observer (Subscriber)
+ */
+class Observer {
+  update(event, data) {
+    throw new Error("Method 'update(event, data)' must be implemented by concrete observer");
+  }
+}
+
+/**
+ * Base Class Subject (Publisher)
+ */
+class Subject {
   constructor() {
-    this._subscribers = {};
+    this._observers = [];
+  }
+
+  attach(observer) {
+    if (!this._observers.includes(observer)) {
+      this._observers.push(observer);
+    }
+  }
+
+  detach(observer) {
+    this._observers = this._observers.filter(obs => obs !== observer);
+  }
+
+  notify(event, data = {}) {
+    this._observers.forEach(observer => {
+      try {
+        observer.update(event, data);
+      } catch (err) {
+        console.error(`Error notifying observer ${observer.constructor.name}:`, err);
+      }
+    });
+  }
+}
+
+// ------------------------------------------------------------
+// KELAS-KELAS OBSERVER KONKRET (Subscriber)
+// ------------------------------------------------------------
+
+/**
+ * 1. NotificationService / NotificationObserver
+ * Mengelola notifikasi in-app untuk antarmuka pengguna
+ */
+class NotificationObserver extends Observer {
+  constructor() {
+    super();
     this._notifications = this._loadNotifications();
   }
 
-  // Subscribe to an event
-  subscribe(event, callback, id = null) {
-    if (!this._subscribers[event]) {
-      this._subscribers[event] = [];
+  update(event, data) {
+    switch (event) {
+      case 'LOAN_APPROVED':
+        this.addNotification({
+          type: 'success',
+          title: 'Peminjaman Disetujui',
+          message: `Permintaan peminjaman buku "${data.bookTitle || 'Buku'}" telah disetujui pustakawan. Batas pengembalian: ${data.dueDate}.`,
+          userId: data.userId,
+          bookId: data.bookId,
+          link: '../user/my-loans.html'
+        });
+        break;
+
+      case 'LOAN_REJECTED':
+        this.addNotification({
+          type: 'danger',
+          title: 'Peminjaman Ditolak',
+          message: `Permintaan peminjaman buku "${data.bookTitle || 'Buku'}" ditolak. Alasan: ${data.reason || 'Tidak memenuhi syarat'}.`,
+          userId: data.userId,
+          bookId: data.bookId,
+          link: '../user/my-loans.html'
+        });
+        break;
+
+      case 'LOAN_RETURNED':
+        this.addNotification({
+          type: 'info',
+          title: 'Buku Dikembalikan',
+          message: `Buku "${data.bookTitle || 'Buku'}" telah berhasil dikembalikan. Terima kasih!`,
+          userId: data.userId,
+          bookId: data.bookId,
+          link: '../user/my-loans.html'
+        });
+        break;
+
+      case 'LOAN_EXTENDED':
+        this.addNotification({
+          type: 'success',
+          title: 'Perpanjangan Berhasil',
+          message: `Masa pinjam buku "${data.bookTitle || 'Buku'}" telah diperpanjang hingga ${data.dueDate}.`,
+          userId: data.userId,
+          bookId: data.bookId,
+          link: '../user/my-loans.html'
+        });
+        break;
+
+      case 'BOOK_AVAILABLE':
+        this.addNotification({
+          type: 'success',
+          title: 'Buku Reservasi Tersedia!',
+          message: `Buku antrean Anda "${data.bookTitle || 'Buku'}" kini tersedia untuk diambil di perpustakaan (batas waktu 2x24 jam).`,
+          userId: data.userId,
+          bookId: data.bookId,
+          link: `../user/book-detail.html?id=${data.bookId}`
+        });
+        break;
+
+      case 'DUE_SOON':
+        this.addNotification({
+          type: 'warning',
+          title: 'Jatuh Tempo Mendekati',
+          message: `Buku "${data.bookTitle || 'Buku'}" harus dikembalikan dalam ${data.daysLeft || 1} hari.`,
+          userId: data.userId,
+          bookId: data.bookId,
+          link: '../user/my-loans.html'
+        });
+        break;
+
+      case 'LOAN_OVERDUE':
+        this.addNotification({
+          type: 'danger',
+          title: 'Peminjaman Terlambat!',
+          message: `Buku "${data.bookTitle || 'Buku'}" telah melewati batas pengembalian. Denda Rp 1.000/hari berlaku.`,
+          userId: data.userId,
+          bookId: data.bookId,
+          link: '../user/my-loans.html'
+        });
+        break;
+
+      default:
+        // Notifikasi umum jika ada pesan
+        if (data.title && data.message) {
+          this.addNotification(data);
+        }
+        break;
     }
-    const sub = { callback, id: id || `sub_${Date.now()}_${Math.random()}` };
-    this._subscribers[event].push(sub);
-    return sub.id; // return subscription ID for unsubscribing
   }
 
-  // Unsubscribe by ID
-  unsubscribe(event, subscriptionId) {
-    if (!this._subscribers[event]) return;
-    this._subscribers[event] = this._subscribers[event].filter(s => s.id !== subscriptionId);
-  }
-
-  // Notify all subscribers of an event
-  notify(event, data = {}) {
-    const subs = this._subscribers[event] || [];
-    subs.forEach(sub => {
-      try { sub.callback(data); }
-      catch (e) { console.error('Observer callback error:', e); }
-    });
-    // Also notify wildcard listeners
-    const wildcards = this._subscribers['*'] || [];
-    wildcards.forEach(sub => {
-      try { sub.callback({ event, ...data }); }
-      catch (e) { /* silent */ }
-    });
-  }
-
-  // Create & store a notification
-  addNotification({ type = 'info', title, message, userId = null, bookId = null, link = '#' }) {
+  addNotification(notifData) {
     const notif = {
-      id: `notif_${Date.now()}`,
-      type,       // 'info' | 'success' | 'warning' | 'danger'
-      title,
-      message,
-      userId,
-      bookId,
-      link,
+      id: `notif_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
+      type: notifData.type || 'info',
+      title: notifData.title || 'Notifikasi',
+      message: notifData.message || '',
+      userId: notifData.userId || null,
+      bookId: notifData.bookId || null,
+      link: notifData.link || '#',
       read: false,
-      createdAt: new Date().toISOString(),
+      createdAt: new Date().toISOString()
     };
+
     this._notifications.unshift(notif);
-    // Keep max 100 notifications
     if (this._notifications.length > 100) this._notifications.pop();
     this._saveNotifications();
-    this.notify('notification:new', notif);
     return notif;
   }
 
-  // Mark as read
+  getNotifications(userId = null) {
+    if (!userId) return this._notifications;
+    return this._notifications.filter(n => !n.userId || n.userId === userId);
+  }
+
+  getUnreadCount(userId = null) {
+    return this.getNotifications(userId).filter(n => !n.read).length;
+  }
+
   markRead(notifId) {
     const notif = this._notifications.find(n => n.id === notifId);
     if (notif) {
       notif.read = true;
       this._saveNotifications();
-      this.notify('notification:read', { id: notifId });
     }
   }
 
@@ -76,17 +184,6 @@ class NotificationSystem {
       if (!userId || n.userId === userId) n.read = true;
     });
     this._saveNotifications();
-    this.notify('notification:allRead', { userId });
-  }
-
-  // Get notifications for a user
-  getNotifications(userId = null) {
-    if (!userId) return this._notifications;
-    return this._notifications.filter(n => !n.userId || n.userId === userId);
-  }
-
-  getUnreadCount(userId = null) {
-    return this.getNotifications(userId).filter(n => !n.read).length;
   }
 
   deleteNotification(notifId) {
@@ -97,71 +194,215 @@ class NotificationSystem {
   _loadNotifications() {
     try {
       return JSON.parse(localStorage.getItem('pt_notifications') || '[]');
-    } catch { return []; }
+    } catch {
+      return [];
+    }
   }
 
   _saveNotifications() {
     localStorage.setItem('pt_notifications', JSON.stringify(this._notifications));
   }
+}
 
-  // Convenience methods
-  notifyBookAvailable(book, userId) {
-    return this.addNotification({
-      type: 'success',
-      title: 'Buku Tersedia!',
-      message: `"${book.title}" kini tersedia untuk dipinjam.`,
-      userId,
-      bookId: book.id,
-      link: `../user/book-detail.html?id=${book.id}`,
-    });
+/**
+ * 2. EmailService / EmailObserver
+ * Mensimulasikan pengiriman email kepada mahasiswa sivitas USK
+ */
+class EmailObserver extends Observer {
+  constructor() {
+    super();
+    this.emailLogs = [];
   }
 
-  notifyDueSoon(loan, daysLeft) {
-    return this.addNotification({
-      type: 'warning',
-      title: 'Jatuh Tempo Mendekati',
-      message: `Buku "${loan.bookTitle}" harus dikembalikan dalam ${daysLeft} hari.`,
-      userId: loan.userId,
-      bookId: loan.bookId,
-      link: '../user/my-loans.html',
-    });
-  }
-
-  notifyLoanApproved(loan) {
-    return this.addNotification({
-      type: 'success',
-      title: 'Peminjaman Disetujui',
-      message: `Permintaan peminjaman "${loan.bookTitle}" telah disetujui.`,
-      userId: loan.userId,
-      bookId: loan.bookId,
-      link: '../user/my-loans.html',
-    });
-  }
-
-  notifyLoanRejected(loan, reason = '') {
-    return this.addNotification({
-      type: 'danger',
-      title: 'Peminjaman Ditolak',
-      message: `Permintaan peminjaman "${loan.bookTitle}" ditolak. ${reason}`,
-      userId: loan.userId,
-      bookId: loan.bookId,
-      link: '../user/my-loans.html',
-    });
-  }
-
-  notifyOverdue(loan) {
-    return this.addNotification({
-      type: 'danger',
-      title: 'Buku Terlambat!',
-      message: `Buku "${loan.bookTitle}" sudah melewati batas waktu pengembalian. Denda berlaku.`,
-      userId: loan.userId,
-      bookId: loan.bookId,
-      link: '../user/my-loans.html',
-    });
+  update(event, data) {
+    // Simulasi pengiriman email ke alamat @mhs.usk.ac.id
+    const logEntry = {
+      timestamp: new Date().toISOString(),
+      event,
+      recipient: data.userEmail || `mhs_${data.userId || 'user'}@mhs.usk.ac.id`,
+      subject: `[Pustaka Tanyoe USK] ${event.replace('_', ' ')}: ${data.bookTitle || ''}`,
+      payload: data
+    };
+    this.emailLogs.push(logEntry);
+    console.info(`[EmailService] 📧 Email terkirim ke ${logEntry.recipient} untuk event: ${event}`);
   }
 }
 
-// Singleton instance
-const notificationSystem = new NotificationSystem();
-window.NotificationSystem = NotificationSystem;
-window.notificationSystem = notificationSystem;
+/**
+ * 3. AuditLogService / AuditLogObserver
+ * Mencatat log audit seluruh transaksi sirkulasi dan perubahan status buku
+ */
+class AuditLogObserver extends Observer {
+  constructor() {
+    super();
+    this.auditLogs = this._loadLogs();
+  }
+
+  update(event, data) {
+    const entry = {
+      id: `audit_${Date.now()}`,
+      timestamp: new Date().toISOString(),
+      event,
+      actor: data.actor || data.userId || 'SYSTEM',
+      bookId: data.bookId || null,
+      loanId: data.loanId || null,
+      details: data
+    };
+
+    this.auditLogs.unshift(entry);
+    if (this.auditLogs.length > 200) this.auditLogs.pop();
+    this._saveLogs();
+    console.info(`[AuditLogService] 📝 Log tercatat: [${event}] oleh ${entry.actor}`);
+  }
+
+  _loadLogs() {
+    try {
+      return JSON.parse(localStorage.getItem('pt_audit_logs') || '[]');
+    } catch {
+      return [];
+    }
+  }
+
+  _saveLogs() {
+    localStorage.setItem('pt_audit_logs', JSON.stringify(this.auditLogs));
+  }
+}
+
+// ------------------------------------------------------------
+// KELAS SUBJECT KONKRET (Publisher)
+// ------------------------------------------------------------
+
+/**
+ * SirkulasiSubject (Peminjaman / Reservasi Subject)
+ * Mengelola pendaftaran observer dan menyiarkan event sirkulasi
+ */
+class SirkulasiSubject extends Subject {
+  notifyLoanRequested(loan) {
+    this.notify('LOAN_REQUESTED', loan);
+  }
+
+  notifyLoanApproved(loan) {
+    this.notify('LOAN_APPROVED', loan);
+  }
+
+  notifyLoanRejected(loan, reason) {
+    this.notify('LOAN_REJECTED', { ...loan, reason });
+  }
+
+  notifyLoanReturned(loan) {
+    this.notify('LOAN_RETURNED', loan);
+  }
+
+  notifyLoanExtended(loan) {
+    this.notify('LOAN_EXTENDED', loan);
+  }
+
+  notifyBookAvailable(book, userId) {
+    this.notify('BOOK_AVAILABLE', { bookTitle: book.title, bookId: book.id, userId });
+  }
+
+  notifyDueSoon(loan, daysLeft) {
+    this.notify('DUE_SOON', { ...loan, daysLeft });
+  }
+
+  notifyOverdue(loan) {
+    this.notify('LOAN_OVERDUE', loan);
+  }
+}
+
+// Inisialisasi Singleton SirkulasiSubject & Observers
+const sirkulasiSubject = new SirkulasiSubject();
+const notificationObserver = new NotificationObserver();
+const emailObserver = new EmailObserver();
+const auditLogObserver = new AuditLogObserver();
+
+// Daftarkan observer ke subject
+sirkulasiSubject.attach(notificationObserver);
+sirkulasiSubject.attach(emailObserver);
+sirkulasiSubject.attach(auditLogObserver);
+
+// ------------------------------------------------------------
+// Backward-Compatibility Wrapper untuk Kode UI Lama
+// ------------------------------------------------------------
+class NotificationSystemAdapter {
+  constructor(subject, notifObserver) {
+    this.subject = subject;
+    this.notifObserver = notifObserver;
+  }
+
+  subscribe(event, callback) {
+    // Custom inline observer adapter
+    const customObs = {
+      update: (evt, data) => {
+        if (evt === event || event === '*') callback(data);
+      }
+    };
+    this.subject.attach(customObs);
+    return customObs;
+  }
+
+  unsubscribe(event, observerRef) {
+    this.subject.detach(observerRef);
+  }
+
+  notify(event, data) {
+    this.subject.notify(event, data);
+  }
+
+  addNotification(data) {
+    return this.notifObserver.addNotification(data);
+  }
+
+  markRead(id) {
+    return this.notifObserver.markRead(id);
+  }
+
+  markAllRead(userId) {
+    return this.notifObserver.markAllRead(userId);
+  }
+
+  getNotifications(userId) {
+    return this.notifObserver.getNotifications(userId);
+  }
+
+  getUnreadCount(userId) {
+    return this.notifObserver.getUnreadCount(userId);
+  }
+
+  deleteNotification(id) {
+    return this.notifObserver.deleteNotification(id);
+  }
+
+  notifyBookAvailable(book, userId) {
+    this.subject.notifyBookAvailable(book, userId);
+  }
+
+  notifyDueSoon(loan, daysLeft) {
+    this.subject.notifyDueSoon(loan, daysLeft);
+  }
+
+  notifyLoanApproved(loan) {
+    this.subject.notifyLoanApproved(loan);
+  }
+
+  notifyLoanRejected(loan, reason) {
+    this.subject.notifyLoanRejected(loan, reason);
+  }
+
+  notifyOverdue(loan) {
+    this.subject.notifyOverdue(loan);
+  }
+}
+
+const notificationSystem = new NotificationSystemAdapter(sirkulasiSubject, notificationObserver);
+
+// Export ke window
+window.Observer               = Observer;
+window.Subject                = Subject;
+window.NotificationObserver   = NotificationObserver;
+window.EmailObserver          = EmailObserver;
+window.AuditLogObserver       = AuditLogObserver;
+window.SirkulasiSubject       = SirkulasiSubject;
+window.sirkulasiSubject       = sirkulasiSubject;
+window.NotificationSystem     = NotificationSystemAdapter;
+window.notificationSystem     = notificationSystem;
