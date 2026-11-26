@@ -122,6 +122,7 @@ const SAMPLE_BOOKS = [
     coverImage: 'assets/images/covers/bk008.jpeg',
     coverColor: '#374151', coverColor2: '#1F2937',
     isFeatured: false, isNewArrival: false,
+    statusEksemplar: 'Rusak',
   },
   {
     id: 'bk009',
@@ -339,7 +340,11 @@ const SAMPLE_BOOKS = [
 function initBookData() {
   const existing = localStorage.getItem('pt_books');
   if (!existing) {
-    localStorage.setItem('pt_books', JSON.stringify(SAMPLE_BOOKS));
+    const initialized = SAMPLE_BOOKS.map(b => ({
+      ...b,
+      statusEksemplar: b.statusEksemplar || (b.id === 'bk008' ? 'Rusak' : 'Tersedia')
+    }));
+    localStorage.setItem('pt_books', JSON.stringify(initialized));
     return;
   }
   try {
@@ -365,6 +370,10 @@ function initBookData() {
       if (b.rating === undefined || isNaN(b.rating)) {
         b.rating = 5.0;
         b.ratingCount = 1;
+        updated = true;
+      }
+      if (!b.statusEksemplar) {
+        b.statusEksemplar = (b.id === 'bk008') ? 'Rusak' : 'Tersedia';
         updated = true;
       }
     });

@@ -80,7 +80,10 @@ function getDueDateStatus(dueDateStr) {
 }
 
 // ── Loan Status Badge ──
-function getLoanStatusBadge(status) {
+function getLoanStatusBadge(status, loan = null) {
+  if (loan && (loan.autoRejected || (loan.rejectedReason && loan.rejectedReason.includes('3 buku')) || (loan.notes && loan.notes.includes('Otomatis')))) {
+    return `<span class="badge badge-red" style="font-weight:700;" title="Ditolak otomatis oleh sistem karena kuota 3 buku terpenuhi"><i class="fas fa-ban"></i> Ditolak Otomatis</span>`;
+  }
   const map = {
     pending:  { label: 'Menunggu',     class: 'badge-yellow' },
     active:   { label: 'Dipinjam',     class: 'badge-blue' },
@@ -169,6 +172,20 @@ function getBookCoverSrc(book) {
 
 function renderBookCover(book, classes = '') {
   const src = getBookCoverSrc(book);
+  const isRusak = book.statusEksemplar === 'Rusak';
+  const avail = (book.stock || 0) - (book.borrowed || 0);
+
+  let badgeHtml = '';
+  if (isRusak) {
+    badgeHtml = `<span class="book-availability-badge badge-rusak"><i class="fas fa-tools"></i> Rusak (F11)</span>`;
+  } else if (book.isBorrowedByMe) {
+    badgeHtml = `<span class="book-availability-badge badge-my-loan"><i class="fas fa-book-reader"></i> Dipinjam</span>`;
+  } else if (avail > 0) {
+    badgeHtml = `<span class="book-availability-badge badge-available">Tersedia</span>`;
+  } else {
+    badgeHtml = `<span class="book-availability-badge badge-borrowed">Habis</span>`;
+  }
+
   return `
     <div class="book-cover ${classes}" style="background:${getBookCoverGradient(book)}; position:relative; overflow:hidden;">
       <img src="${src}" alt="${book.title}" class="book-cover-img" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" loading="lazy" />
@@ -176,9 +193,7 @@ function renderBookCover(book, classes = '') {
         <i class="fas fa-book"></i>
         <span class="book-cover-title">${book.title}</span>
       </div>
-      <span class="book-availability-badge ${book.isAvailable !== false && (book.stock - (book.borrowed||0)) > 0 ? 'badge-available' : 'badge-borrowed'}">
-        ${(book.stock - (book.borrowed||0)) > 0 ? 'Tersedia' : 'Habis'}
-      </span>
+      ${badgeHtml}
       ${book.isNewArrival ? '<span class="book-availability-badge badge-new" style="top:40px;">Baru</span>' : ''}
     </div>`;
 }
@@ -459,7 +474,48 @@ function initApp() {
     updateUserNavAvatar();
     renderSidebarUser();
     initSidebarActiveLink();
+    initAdminSidebar();
   }, 100);
+}
+
+// ── Admin Sidebar Toggle & Collapse ──
+function toggleAdminSidebar() {
+  const layout = document.querySelector('.app-layout');
+  const sidebar = document.getElementById('sidebar');
+  if (!sidebar) return;
+
+  const isDesktop = window.innerWidth > 1024;
+  if (isDesktop) {
+    if (layout) {
+      layout.classList.toggle('sidebar-collapsed');
+      const isCollapsed = layout.classList.contains('sidebar-collapsed');
+      localStorage.setItem('pt_admin_sidebar_collapsed', isCollapsed ? 'true' : 'false');
+      updateSidebarToggleState(isCollapsed);
+    }
+  } else {
+    sidebar.classList.toggle('mobile-open');
+  }
+}
+
+function initAdminSidebar() {
+  const isDesktop = window.innerWidth > 1024;
+  if (isDesktop && localStorage.getItem('pt_admin_sidebar_collapsed') === 'true') {
+    const layout = document.querySelector('.app-layout');
+    if (layout) layout.classList.add('sidebar-collapsed');
+    updateSidebarToggleState(true);
+  }
+}
+
+function updateSidebarToggleState(isCollapsed) {
+  const btns = document.querySelectorAll('.sidebar-toggle-btn');
+  btns.forEach(btn => {
+    btn.setAttribute('title', isCollapsed ? 'Tampilkan Menu Sidebar' : 'Sembunyikan Menu Sidebar');
+    btn.setAttribute('aria-label', isCollapsed ? 'Tampilkan Menu Sidebar' : 'Sembunyikan Menu Sidebar');
+    const icon = btn.querySelector('i');
+    if (icon) {
+      icon.className = isCollapsed ? 'fas fa-indent' : 'fas fa-bars';
+    }
+  });
 }
 
 // Expose globals
@@ -489,6 +545,8 @@ window.renderNavUser     = renderNavUser;
 window.handleLogout      = handleLogout;
 window.renderSidebarUser = renderSidebarUser;
 window.initSidebarActiveLink = initSidebarActiveLink;
+window.toggleAdminSidebar = toggleAdminSidebar;
+window.initAdminSidebar   = initAdminSidebar;
 window.initApp           = initApp;
 
 document.addEventListener('DOMContentLoaded', initApp);

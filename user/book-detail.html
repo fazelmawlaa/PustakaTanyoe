@@ -171,6 +171,16 @@
       <button class="modal-close" data-modal-close>&times;</button>
     </div>
     <div class="modal-body">
+      <!-- Banner Peringatan Kuota Otomatis Menolak -->
+      <div id="modalQuotaWarning" style="display:none; background:#FEF2F2; border: 1.5px solid #FCA5A5; border-radius: var(--radius-lg); padding: 12px 14px; margin-bottom: var(--space-4); color: #991B1B;">
+        <div style="font-weight: 700; font-size: 0.82rem; display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
+          <i class="fas fa-exclamation-triangle text-red"></i> Peringatan Kuota Peminjaman
+        </div>
+        <div style="font-size: 0.75rem; line-height: 1.4;">
+          Anda saat ini sudah meminjam/mengajukan <strong>3 buku</strong> (batas maksimal perpustakaan USK). Jika Anda tetap mengonfirmasi, sistem akan <strong>otomatis menolak</strong> permohonan buku selanjutnya dan mencatatnya ke riwayat peminjaman.
+        </div>
+      </div>
+
       <!-- Info Ringkas Buku -->
       <div style="background:var(--gold-50); border: 1px solid var(--gold-200); border-radius: var(--radius-lg); padding: var(--space-4); margin-bottom: var(--space-4);">
         <div class="font-semibold text-sm" style="color:var(--navy-800);" id="modalBookTitle">Judul Buku</div>
@@ -279,10 +289,16 @@ function renderBookDetails() {
   document.getElementById('specYear').textContent = b.year;
   document.getElementById('specCategory').textContent = b.category;
 
+  const isRusak = b.statusEksemplar === 'Rusak';
   document.getElementById('stockNumberText').textContent = `${avail} / ${b.stock}`;
-  document.getElementById('stockBadgeContainer').innerHTML = avail > 0
-    ? `<span class="badge badge-green"><i class="fas fa-check-circle"></i> Stok Tersedia</span>`
-    : `<span class="badge badge-red"><i class="fas fa-times-circle"></i> Stok Kosong</span>`;
+  
+  if (isRusak) {
+    document.getElementById('stockBadgeContainer').innerHTML = `<span class="badge badge-red" style="font-weight:700;"><i class="fas fa-tools"></i> Eksemplar Rusak (F11)</span>`;
+  } else {
+    document.getElementById('stockBadgeContainer').innerHTML = avail > 0
+      ? `<span class="badge badge-green"><i class="fas fa-check-circle"></i> Stok Tersedia</span>`
+      : `<span class="badge badge-red"><i class="fas fa-times-circle"></i> Stok Kosong</span>`;
+  }
 
   // Cover
   const coverSrc = getBookCoverSrc(b);
@@ -297,10 +313,45 @@ function renderBookDetails() {
   // Rating
   document.getElementById('ratingArea').innerHTML = renderStars(b.rating) + ` <span class="text-sm text-muted">Berdasarkan ${b.ratingCount} ulasan mahasiswa</span>`;
 
+  // Update Wishlist button state
+  const session = getCurrentSession();
+  const btnWishlist = document.getElementById('btnWishlistBook');
+  if (session && btnWishlist) {
+    const user = getUserById(session.userId);
+    const inWishlist = user && user.wishlist && user.wishlist.includes(b.id);
+    if (inWishlist) {
+      btnWishlist.innerHTML = '<i class="fas fa-bookmark text-gold"></i> Tersimpan di Wishlist';
+      btnWishlist.style.background = 'var(--gold-50)';
+      btnWishlist.style.borderColor = 'var(--gold-500)';
+      btnWishlist.style.color = 'var(--gold-700)';
+    } else {
+      btnWishlist.innerHTML = '<i class="far fa-bookmark"></i> Tambah ke Wishlist';
+      btnWishlist.style.background = '';
+      btnWishlist.style.borderColor = '';
+      btnWishlist.style.color = '';
+    }
+  }
+
   // Borrow button & quota checks
   const btn = document.getElementById('btnBorrowBook');
   const noticeBox = document.getElementById('userQuotaNotice');
-  const session = getCurrentSession();
+
+  // Check F11 Rule: Damaged exemplar cannot be borrowed
+  if (isRusak) {
+    btn.disabled = true;
+    btn.style.background = '#9CA3AF';
+    btn.style.borderColor = '#9CA3AF';
+    btn.style.cursor = 'not-allowed';
+    btn.innerHTML = '<i class="fas fa-ban"></i> Eksemplar Rusak (Tidak Dapat Dipinjam)';
+    if (noticeBox) {
+      noticeBox.style.display = 'block';
+      noticeBox.innerHTML = `
+        <div class="alert alert-danger" style="border-radius: var(--radius-lg); font-size: var(--text-xs); background:#FEF2F2; border:1.5px solid #FCA5A5; color:#991B1B;">
+          <i class="fas fa-tools text-danger"></i> <strong>Aturan F11 & Invariant 10:</strong> Eksemplar fisik buku ini berstatus <strong>Rusak</strong>. Sesuai ketentuan perpustakaan USK, eksemplar rusak tidak dapat diajukan untuk peminjaman maupun disetujui oleh admin.
+        </div>`;
+    }
+    return;
+  }
 
   if (avail <= 0) {
     btn.disabled = true;
@@ -428,9 +479,23 @@ function handleBorrowModal() {
 
   // Pre-check quota limit (3 books)
   const userLoans = typeof getActiveLoans === 'function' ? getActiveLoans(session.userId, true) : [];
+  const quotaWarning = document.getElementById('modalQuotaWarning');
+  const btnSubmit = document.getElementById('btnSubmitBorrow');
+
   if (userLoans.length >= 3) {
-    showToast('warning', 'Batas Kuota Tercapai', 'Anda sudah mencapai batas maksimal 3 buku sekaligus.');
-    return;
+    if (quotaWarning) quotaWarning.style.display = 'block';
+    if (btnSubmit) {
+      btnSubmit.style.background = '#DC2626';
+      btnSubmit.style.borderColor = '#DC2626';
+      btnSubmit.innerHTML = '<i class="fas fa-ban"></i> Konfirmasi Pengajuan (Auto-Tolak Sesuai Kuota)';
+    }
+  } else {
+    if (quotaWarning) quotaWarning.style.display = 'none';
+    if (btnSubmit) {
+      btnSubmit.style.background = '';
+      btnSubmit.style.borderColor = '';
+      btnSubmit.innerHTML = 'Konfirmasi Pengajuan';
+    }
   }
 
   const already = userLoans.find(l => l.bookId === currentBook.id);
@@ -481,6 +546,9 @@ function submitBorrowRequest() {
       bookId: currentBook.id
     });
     setTimeout(() => window.location.href = 'my-loans.html', 1200);
+  } else if (res.autoRejected) {
+    showToast('error', 'Peminjaman Ditolak Otomatis', res.message || 'Peminjaman ditolak otomatis oleh sistem karena kuota maksimal 3 buku tercapai.');
+    setTimeout(() => window.location.href = 'my-loans.html', 1500);
   } else {
     showToast('error', 'Gagal Meminjam', res.message || 'Terjadi kesalahan.');
   }
@@ -503,6 +571,7 @@ function toggleBookWishlist() {
     showToast('success', 'Disimpan ke Wishlist', 'Buku ditambahkan ke koleksi favorit Anda.');
   }
   updateUser(user.id, { wishlist: user.wishlist });
+  renderBookDetails();
 }
 </script>
 </body>

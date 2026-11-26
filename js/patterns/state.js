@@ -132,10 +132,10 @@ class EksemplarContext {
   _resolveState(stateName) {
     switch (stateName) {
       case 'Dipinjam': return new DipinjamState();
-      case 'Rusak':    return new RusakState();
+      case 'Rusak': return new RusakState();
       case 'Nonaktif': return new NonaktifState();
       case 'Tersedia':
-      default:         return new TersediaState();
+      default: return new TersediaState();
     }
   }
 
@@ -186,23 +186,18 @@ class PeminjamanState {
   constructor(name) {
     this.name = name;
   }
-
   getName() {
     return this.name;
   }
-
   verifikasi(context, adminId) {
     return { success: false, message: `Transaksi tidak dapat diverifikasi pada status ${this.name}` };
   }
-
   tolak(context, reason) {
     return { success: false, message: `Transaksi tidak dapat ditolak pada status ${this.name}` };
   }
-
   kembalikan(context) {
     return { success: false, message: `Buku tidak dapat dikembalikan pada status ${this.name}` };
   }
-
   perpanjang(context) {
     return { success: false, message: `Peminjaman tidak dapat diperpanjang pada status ${this.name}` };
   }
@@ -212,7 +207,6 @@ class MenungguVerifikasiState extends PeminjamanState {
   constructor() {
     super('MenungguVerifikasi');
   }
-
   // Pre-Condition 7: Transaksi hanya dapat diverifikasi apabila berstatus MenungguVerifikasi
   verifikasi(context, adminId) {
     context.setState(new BerlangsungState());
@@ -220,7 +214,6 @@ class MenungguVerifikasiState extends PeminjamanState {
     context.loan.approvedAt = new Date().toISOString();
     return { success: true, message: 'Peminjaman berhasil diverifikasi oleh admin.' };
   }
-
   tolak(context, reason = '') {
     context.setState(new DitolakState());
     context.loan.rejectedReason = reason;
@@ -341,16 +334,16 @@ class PeminjamanContext {
 }
 
 // Export global untuk window browser
-window.EksemplarState         = EksemplarState;
-window.TersediaState          = TersediaState;
-window.DipinjamState          = DipinjamState;
-window.RusakState             = RusakState;
-window.NonaktifState          = NonaktifState;
-window.EksemplarContext       = EksemplarContext;
+window.EksemplarState = EksemplarState;
+window.TersediaState = TersediaState;
+window.DipinjamState = DipinjamState;
+window.RusakState = RusakState;
+window.NonaktifState = NonaktifState;
+window.EksemplarContext = EksemplarContext;
 
-window.PeminjamanState        = PeminjamanState;
-window.MenungguVerifikasiState= MenungguVerifikasiState;
-window.BerlangsungState       = BerlangsungState;
-window.DikembalikanState      = DikembalikanState;
-window.DitolakState           = DitolakState;
-window.PeminjamanContext      = PeminjamanContext;
+window.PeminjamanState = PeminjamanState;
+window.MenungguVerifikasiState = MenungguVerifikasiState;
+window.BerlangsungState = BerlangsungState;
+window.DikembalikanState = DikembalikanState;
+window.DitolakState = DitolakState;
+window.PeminjamanContext = PeminjamanContext;

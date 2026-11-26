@@ -106,13 +106,18 @@
 
 <div class="app-layout">
   <aside class="sidebar" id="sidebar">
-    <a href="dashboard.html" class="sidebar-brand">
-      <img src="../assets/images/logo_usk_clean.png" alt="Logo USK" class="sidebar-logo-img" />
-      <div class="sidebar-brand-text">
-        <div class="site-name">PustakaTanyoe</div>
-        <div class="site-sub">Admin Control Center</div>
-      </div>
-    </a>
+    <div class="sidebar-brand" style="justify-content:space-between;">
+      <a href="dashboard.html" style="display:flex; align-items:center; gap:var(--space-3); text-decoration:none;">
+        <img src="../assets/images/logo_usk_clean.png" alt="Logo USK" class="sidebar-logo-img" />
+        <div class="sidebar-brand-text">
+          <div class="site-name">PustakaTanyoe</div>
+          <div class="site-sub">Admin Control Center</div>
+        </div>
+      </a>
+      <button type="button" class="sidebar-close-btn" onclick="toggleAdminSidebar()" title="Sembunyikan Menu Sidebar">
+        <i class="fas fa-chevron-left"></i>
+      </button>
+    </div>
     <div class="sidebar-nav">
       <div class="sidebar-section-label">Manajemen Utama</div>
       <a href="dashboard.html" class="sidebar-link"><span class="link-icon"><i class="fas fa-tachometer-alt"></i></span><span>Dashboard</span></a>
@@ -130,7 +135,9 @@
   <div class="app-content">
     <header class="app-header">
       <div class="flex items-center gap-3">
-        <button class="btn btn-ghost btn-icon" onclick="document.getElementById('sidebar').classList.toggle('mobile-open')"><i class="fas fa-bars"></i></button>
+        <button class="btn btn-ghost btn-icon sidebar-toggle-btn" onclick="toggleAdminSidebar()" title="Sembunyikan / Tampilkan Menu Sidebar">
+          <i class="fas fa-bars"></i>
+        </button>
         <h2 class="app-header-title">Transaksi Sirkulasi Pustaka</h2>
       </div>
       <div class="app-header-actions">
@@ -220,6 +227,11 @@ function renderLoansTable() {
     const fine = calculateFine(l);
     const userLoans = typeof getActiveLoans === 'function' ? getActiveLoans(l.userId, true) : [];
     const quotaDisplay = `<span class="badge ${userLoans.length >= 3 ? 'badge-red' : 'badge-gray'}" style="font-size:0.6rem; padding: 1px 5px;">${userLoans.length}/3 Buku</span>`;
+    
+    // Check if book has damaged exemplar status (F11)
+    const book = typeof getBookById === 'function' ? getBookById(l.bookId) : null;
+    const isBookRusak = book && book.statusEksemplar === 'Rusak';
+
     return `
       <tr>
         <td class="font-mono text-xs">${l.id}</td>
@@ -230,15 +242,22 @@ function renderLoansTable() {
         <td>
           <div class="font-semibold">${l.bookTitle}</div>
           <div class="text-xs text-muted">${l.bookAuthor}</div>
+          ${isBookRusak ? `<span class="badge badge-red" style="font-size:0.65rem; font-weight:700; margin-top:3px;"><i class="fas fa-tools"></i> Eksemplar Rusak (F11)</span>` : ''}
         </td>
         <td>${l.borrowDate ? formatDateShort(l.borrowDate) : '-'}</td>
         <td>${l.dueDate ? formatDateShort(l.dueDate) : '-'}</td>
-        <td>${getLoanStatusBadge(l.status)}</td>
+        <td>${getLoanStatusBadge(l.status, l)}</td>
         <td class="font-semibold ${fine > 0 ? 'text-danger' : 'text-muted'}">${fine > 0 ? formatCurrency(fine) : 'Rp 0'}</td>
         <td class="text-right">
           ${l.status === 'pending' ? `
             <div class="action-cell">
-              <button class="btn-approve" onclick="approveBorrow('${l.id}')"><i class="fas fa-check"></i> Setujui</button>
+              ${isBookRusak ? `
+                <button class="btn-approve" disabled style="opacity:0.4; cursor:not-allowed; background:#9CA3AF; border-color:#9CA3AF;" title="DILARANG F11: Eksemplar buku berstatus Rusak. Admin tidak dapat menyetujui peminjaman.">
+                  <i class="fas fa-ban"></i> Terkunci (F11)
+                </button>
+              ` : `
+                <button class="btn-approve" onclick="approveBorrow('${l.id}')"><i class="fas fa-check"></i> Setujui</button>
+              `}
               <button class="btn-reject"  onclick="rejectBorrow('${l.id}')"><i class="fas fa-times"></i> Tolak</button>
             </div>` : ''}
           ${['active', 'overdue'].includes(l.status) ? `

@@ -390,29 +390,53 @@ function renderCatalogPage() {
     return;
   }
 
+  // Get active session and loans to detect if user has already borrowed or saved this book
+  const session = getCurrentSession();
+  const currentUserId = session ? session.userId : null;
+  const currentUser = currentUserId ? getUserById(currentUserId) : null;
+  const userWishlist = (currentUser && currentUser.wishlist) ? currentUser.wishlist : [];
+  const userActiveLoans = (currentUserId && typeof getActiveLoans === 'function') ? getActiveLoans(currentUserId, true) : [];
+
   // Decorator pattern applied dynamically
   grid.innerHTML = pagedBooks.map(b => {
-    const decBook = BookDecoratorFactory.autoDecorate(b);
-    const available = (b.stock - (b.borrowed || 0)) > 0;
+    const isRusak = b.statusEksemplar === 'Rusak';
+    const isBorrowedByMe = userActiveLoans.some(l => l.bookId === b.id && ['active', 'overdue', 'pending'].includes(l.status));
+    const inWishlist = userWishlist.includes(b.id);
+    
+    // Pass isBorrowedByMe to cover rendering
+    const bookWithState = { ...b, isBorrowedByMe };
     
     return `
       <div class="book-card card-hover animate-fadeInUp">
         <a href="book-detail.html?id=${b.id}">
-          ${renderBookCover(b)}
+          ${renderBookCover(bookWithState)}
         </a>
         <div class="book-info">
-          <div class="book-category">${b.category}</div>
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:var(--space-2);">
+            <div class="book-category" style="margin-bottom:0;">${b.category}</div>
+            ${isRusak ? `<span class="badge badge-red" style="font-size:0.65rem; font-weight:700;"><i class="fas fa-tools"></i> Rusak</span>` : ''}
+          </div>
           <a href="book-detail.html?id=${b.id}"><h4 class="book-title" title="${b.title}">${b.title}</h4></a>
           <div class="book-author"><i class="fas fa-user-edit text-xs"></i> ${b.author}</div>
           <div class="text-xs text-muted mb-2"><i class="fas fa-calendar-alt text-xs"></i> Tahun ${b.year || '-'} • ISBN: ${(b.isbn || '-').slice(0,10)}...</div>
           ${renderStars(b.rating)}
-          <div class="book-actions mt-3">
-            <a href="book-detail.html?id=${b.id}" class="btn btn-primary btn-sm flex-1">
+          <div class="book-actions mt-3" style="display:flex; align-items:center; gap:8px;">
+            <a href="book-detail.html?id=${b.id}" class="btn btn-primary btn-sm flex-1" style="height:38px; min-height:38px; display:inline-flex; align-items:center; justify-content:center; gap:6px;">
               <i class="fas fa-info-circle"></i> Detail
             </a>
-            <button class="btn btn-outline btn-sm btn-icon" onclick="toggleWishlist('${b.id}')" title="Simpan ke Wishlist">
-              <i class="far fa-bookmark"></i>
-            </button>
+            ${isBorrowedByMe ? `
+              <button class="btn btn-sm btn-icon" style="height:38px; width:38px; min-height:38px; min-width:38px; display:inline-flex; align-items:center; justify-content:center; background:#EFF6FF; border:1.5px solid #3B82F6; color:#2563EB; border-radius:var(--radius-md);" title="Buku ini sedang Anda pinjam">
+                <i class="fas fa-book-reader" style="font-size:0.95rem;"></i>
+              </button>
+            ` : inWishlist ? `
+              <button class="btn btn-sm btn-icon" style="height:38px; width:38px; min-height:38px; min-width:38px; display:inline-flex; align-items:center; justify-content:center; background:#FEF3C7; border:1.5px solid #D97706; color:#B45309; border-radius:var(--radius-md);" onclick="toggleWishlist('${b.id}')" title="Tersimpan di Wishlist (Klik untuk menghapus)">
+                <i class="fas fa-bookmark text-gold" style="font-size:0.95rem;"></i>
+              </button>
+            ` : `
+              <button class="btn btn-outline btn-sm btn-icon" style="height:38px; width:38px; min-height:38px; min-width:38px; display:inline-flex; align-items:center; justify-content:center; border-radius:var(--radius-md);" onclick="toggleWishlist('${b.id}')" title="Simpan ke Wishlist">
+                <i class="far fa-bookmark" style="font-size:0.95rem;"></i>
+              </button>
+            `}
           </div>
         </div>
       </div>`;
@@ -444,6 +468,7 @@ function toggleWishlist(bookId) {
     showToast('success', 'Disimpan ke Wishlist', 'Buku berhasil ditambahkan ke daftar bacaan.');
   }
   updateUser(user.id, { wishlist: user.wishlist });
+  renderCatalogPage();
 }
 </script>
 </body>

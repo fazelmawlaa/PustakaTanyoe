@@ -323,45 +323,41 @@ class SortByPopularityStrategy {
 class SearchContext {
   constructor() {
     this._searchStrategy = new FullTextSearchStrategy();
-    this._sortStrategy   = new SortByTitleStrategy();
+    this._sortStrategy = new SortByTitleStrategy();
   }
-
   setSearchStrategy(strategy) {
     this._searchStrategy = strategy;
     return this;
   }
-
   setSortStrategy(strategy) {
     this._sortStrategy = strategy;
     return this;
   }
-
   executeSearch(books, query) {
     return this._searchStrategy.search(books, query);
   }
-
   executeSort(books) {
     return this._sortStrategy.sort(books);
   }
 
   execute(books, { query = '', strategy = 'all', category = '', year = null, available = false, sort = 'title' } = {}) {
     const strategies = {
-      all:       new FullTextSearchStrategy(),
-      title:     new TitleSearchStrategy(),
-      author:    new AuthorSearchStrategy(),
-      isbn:      new ISBNSearchStrategy(),
-      category:  new CategorySearchStrategy(),
+      all: new FullTextSearchStrategy(),
+      title: new TitleSearchStrategy(),
+      author: new AuthorSearchStrategy(),
+      isbn: new ISBNSearchStrategy(),
+      category: new CategorySearchStrategy(),
       publisher: new PublisherSearchStrategy(),
     };
     this._searchStrategy = strategies[strategy] || new FullTextSearchStrategy();
 
     const sorts = {
-      title:      new SortByTitleStrategy(),
-      author:     new SortByAuthorStrategy(),
-      year_desc:  new SortByYearDescStrategy(),
-      year_asc:   new SortByYearAscStrategy(),
-      rating:     new SortByRatingStrategy(),
-      popular:    new SortByPopularityStrategy(),
+      title: new SortByTitleStrategy(),
+      author: new SortByAuthorStrategy(),
+      year_desc: new SortByYearDescStrategy(),
+      year_asc: new SortByYearAscStrategy(),
+      rating: new SortByRatingStrategy(),
+      popular: new SortByPopularityStrategy(),
     };
     this._sortStrategy = sorts[sort] || new SortByTitleStrategy();
 
@@ -385,24 +381,24 @@ class SearchContext {
 const recommendationService = new RecommendationService();
 
 // Export ke window
-window.RecommendationStrategy  = RecommendationStrategy;
+window.RecommendationStrategy = RecommendationStrategy;
 window.BorrowingHistoryStrategy = BorrowingHistoryStrategy;
-window.WishlistStrategy         = WishlistStrategy;
-window.ViewedBooksStrategy      = ViewedBooksStrategy;
-window.TrendingStrategy         = TrendingStrategy;
-window.RecommendationService    = RecommendationService;
-window.recommendationService    = recommendationService;
+window.WishlistStrategy = WishlistStrategy;
+window.ViewedBooksStrategy = ViewedBooksStrategy;
+window.TrendingStrategy = TrendingStrategy;
+window.RecommendationService = RecommendationService;
+window.recommendationService = recommendationService;
 
-window.TitleSearchStrategy    = TitleSearchStrategy;
-window.AuthorSearchStrategy   = AuthorSearchStrategy;
-window.ISBNSearchStrategy     = ISBNSearchStrategy;
+window.TitleSearchStrategy = TitleSearchStrategy;
+window.AuthorSearchStrategy = AuthorSearchStrategy;
+window.ISBNSearchStrategy = ISBNSearchStrategy;
 window.CategorySearchStrategy = CategorySearchStrategy;
-window.PublisherSearchStrategy= PublisherSearchStrategy;
+window.PublisherSearchStrategy = PublisherSearchStrategy;
 window.FullTextSearchStrategy = FullTextSearchStrategy;
-window.SortByTitleStrategy    = SortByTitleStrategy;
-window.SortByAuthorStrategy   = SortByAuthorStrategy;
+window.SortByTitleStrategy = SortByTitleStrategy;
+window.SortByAuthorStrategy = SortByAuthorStrategy;
 window.SortByYearDescStrategy = SortByYearDescStrategy;
-window.SortByYearAscStrategy  = SortByYearAscStrategy;
-window.SortByRatingStrategy   = SortByRatingStrategy;
+window.SortByYearAscStrategy = SortByYearAscStrategy;
+window.SortByRatingStrategy = SortByRatingStrategy;
 window.SortByPopularityStrategy = SortByPopularityStrategy;
-window.SearchContext          = SearchContext;
+window.SearchContext = SearchContext;

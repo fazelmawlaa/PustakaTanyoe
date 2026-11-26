@@ -240,9 +240,45 @@ class SirkulasiFacade {
     // Cek kuota peminjaman pengguna (Maksimal 3 buku)
     const activeLoans = this.peminjamanService.getUserActiveLoans(userId);
     if (activeLoans.length >= 3) {
+      // OTOMATIS TOLAK BUKU SELANJUTNYA JIKA SUDAH MELEBIHI / MENCAPAI 3 BUKU
+      const book = this.eksemplarService.getEksemplar(bookId);
+      const rejectedLoan = {
+        id: `loan_${Date.now()}`,
+        userId,
+        bookId,
+        bookTitle: book ? book.title : 'Buku',
+        borrowDate: new Date().toISOString().split('T')[0],
+        dueDate: new Date().toISOString().split('T')[0],
+        status: 'rejected',
+        statusState: 'Ditolak',
+        autoRejected: true,
+        rejectedReason: 'Ditolak otomatis: Melebihi kuota maksimal peminjaman 3 buku sekaligus (Ketentuan Perpustakaan USK)',
+        rejectedAt: new Date().toISOString(),
+        notes: notes ? `${notes} (Ditolak otomatis oleh sistem: Melebihi kuota 3 buku)` : 'Ditolak otomatis oleh sistem: Melebihi batas kuota peminjaman 3 buku sekaligus.',
+        createdAt: new Date().toISOString()
+      };
+
+      const allLoans = this.peminjamanService.getAllLoans();
+      allLoans.unshift(rejectedLoan);
+      this.peminjamanService.saveLoans(allLoans);
+
+      this.riwayatService.record('PENOLAKAN_OTOMATIS_KUOTA', {
+        loanId: rejectedLoan.id,
+        userId,
+        bookId,
+        alasan: 'Kuota peminjaman melebihi batas 3 buku'
+      });
+
+      this.notifService.notify('LOAN_REJECTED', {
+        ...rejectedLoan,
+        reason: 'Melebihi kuota maksimal peminjaman 3 buku sekaligus (Ketentuan Perpustakaan USK).'
+      });
+
       return {
         success: false,
-        message: 'Batas peminjaman tercapai! Anda sedang meminjam atau mengajukan 3 buku (batas maksimal perpustakaan USK).'
+        autoRejected: true,
+        loan: rejectedLoan,
+        message: 'Pengajuan Ditolak Otomatis oleh Sistem: Anda sudah meminjam/mengajukan 3 buku (batas maksimal perpustakaan USK).'
       };
     }
 
@@ -325,6 +361,27 @@ class SirkulasiFacade {
       return { success: false, message: 'Transaksi peminjaman tidak ditemukan.' };
     }
 
+    // Periksa apakah peminjam sudah memiliki 3 buku aktif
+    const userActiveLoans = allLoans.filter(l => l.userId === loan.userId && ['active', 'overdue'].includes(l.status));
+    if (userActiveLoans.length >= 3) {
+      loan.status = 'rejected';
+      loan.autoRejected = true;
+      loan.rejectedReason = 'Ditolak otomatis: Mahasiswa telah mencapai kuota maksimal 3 buku aktif';
+      loan.rejectedAt = new Date().toISOString();
+      this.peminjamanService.saveLoans(allLoans);
+      this.notifService.notify('LOAN_REJECTED', { ...loan, reason: 'Kuota maksimal 3 buku aktif telah tercapai.' });
+      return { success: false, autoRejected: true, message: 'Peminjaman ditolak otomatis oleh sistem: Mahasiswa ini sudah mencapai kuota maksimal 3 buku aktif.' };
+    }
+
+    // Periksa kondisi fisik eksemplar (Aturan F11 & Invariant 10)
+    const book = this.eksemplarService.getEksemplar(loan.bookId);
+    if (book && book.statusEksemplar === 'Rusak') {
+      return {
+        success: false,
+        message: 'Pelanggaran Aturan F11 & Invariant 10: Eksemplar buku ini berstatus RUSAK. Admin tidak dapat menyetujui peminjaman atau mengubah status transaksi menjadi Dipinjam.'
+      };
+    }
+
     // Pre-Condition 7: Transaksi harus berstatus MenungguVerifikasi
     if (window.PeminjamanContext) {
       const loanCtx = new window.PeminjamanContext(loan);
@@ -343,6 +400,21 @@ class SirkulasiFacade {
 
     // Kurangi stok eksemplar dan ubah state eksemplar
     this.eksemplarService.reduceStock(loan.bookId);
+
+    // Jika setelah persetujuan ini peminjam telah mencapai 3 buku aktif,
+    // OTOMATIS TOLAK permohonan buku lainnya yang masih pending
+    const updatedActiveLoans = allLoans.filter(l => l.userId === loan.userId && ['active', 'overdue'].includes(l.status));
+    if (updatedActiveLoans.length >= 3) {
+      allLoans.forEach(otherLoan => {
+        if (otherLoan.userId === loan.userId && otherLoan.status === 'pending' && otherLoan.id !== loanId) {
+          otherLoan.status = 'rejected';
+          otherLoan.autoRejected = true;
+          otherLoan.rejectedReason = 'Ditolak otomatis oleh sistem: Kuota peminjaman pengguna telah mencapai batas maksimal 3 buku aktif';
+          otherLoan.rejectedAt = new Date().toISOString();
+          this.notifService.notify('LOAN_REJECTED', { ...otherLoan, reason: 'Peminjaman buku lain telah memenuhi kuota 3 buku aktif.' });
+        }
+      });
+    }
 
     // Simpan transaksi
     this.peminjamanService.saveLoans(allLoans);

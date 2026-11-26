@@ -200,12 +200,60 @@ function requestLoan(userId, bookId, notes = '', plannedBorrowDate = null) {
   if (!user || !book) return { success: false, message: 'Data tidak valid.' };
   if (user.memberStatus === 'suspended') return { success: false, message: 'Akun Anda sedang ditangguhkan.' };
 
+  // Aturan F11 & Invariant 10: Eksemplar rusak TIDAK BOLEH dipinjam
+  if (book.statusEksemplar === 'Rusak') {
+    return {
+      success: false,
+      message: 'Pelanggaran Aturan F11 & Invariant 10: Eksemplar buku ini berstatus RUSAK dan tidak dapat diajukan peminjaman.'
+    };
+  }
+  if (book.statusEksemplar === 'Nonaktif') {
+    return {
+      success: false,
+      message: 'Eksemplar buku ini berstatus NONAKTIF dan tidak dapat dipinjam.'
+    };
+  }
+
   // Rule 1: Maksimal 3 buku sekaligus (termasuk yang sedang dipinjam & menunggu persetujuan)
   const userActive = getActiveLoans(userId, true);
   if (userActive.length >= 3) {
+    // OTOMATIS TOLAK BUKU SELANJUTNYA JIKA MELEBIHI 3 BUKU
+    const autoRejectedLoan = {
+      id: `ln${String(Date.now()).slice(-6)}`,
+      userId,
+      userName: user.name,
+      bookId,
+      bookTitle: book.title,
+      bookAuthor: book.author,
+      borrowDate: new Date().toISOString(),
+      dueDate: new Date().toISOString(),
+      returnDate: null,
+      status: 'rejected',
+      autoRejected: true,
+      renewalCount: 0,
+      approvedBy: null,
+      notes: notes ? `${notes} (Ditolak otomatis oleh sistem: Melebihi kuota 3 buku)` : 'Ditolak otomatis oleh sistem: Melebihi kuota maksimal peminjaman 3 buku sekaligus (Ketentuan Perpustakaan USK).',
+      rejectedReason: 'Melebihi kuota maksimal 3 buku sekaligus (Perpustakaan USK)',
+      rejectedAt: new Date().toISOString(),
+      fine: 0,
+      requestDate: new Date().toISOString(),
+    };
+
+    loans.push(autoRejectedLoan);
+    saveLoans(loans);
+
+    if (window.notificationSystem) {
+      window.notificationSystem.notifyLoanRejected(autoRejectedLoan, 'Melebihi batas maksimal peminjaman 3 buku sekaligus (Ketentuan Perpustakaan USK).');
+    }
+    if (window.sirkulasiSubject) {
+      window.sirkulasiSubject.notifyLoanRejected(autoRejectedLoan, 'Melebihi batas maksimal peminjaman 3 buku sekaligus (Ketentuan Perpustakaan USK).');
+    }
+
     return { 
       success: false, 
-      message: 'Batas peminjaman tercapai: Anda sudah meminjam/mengajukan 3 buku. Sesuai ketentuan perpustakaan USK, maksimal peminjaman adalah 3 buku sekaligus.' 
+      autoRejected: true,
+      loan: autoRejectedLoan,
+      message: 'Pengajuan Ditolak Otomatis oleh Sistem: Anda sudah meminjam/mengajukan 3 buku. Sesuai ketentuan perpustakaan USK, batas maksimal peminjaman adalah 3 buku sekaligus.' 
     };
   }
 
@@ -272,11 +320,33 @@ function approveLoan(loanId, adminId) {
   // Cek apakah mahasiswa yang bersangkutan sudah memiliki 3 buku aktif
   const currentActiveLoans = loans.filter(l => l.userId === targetUserId && ['active', 'overdue'].includes(l.status));
   if (currentActiveLoans.length >= 3) {
-    return { success: false, message: 'Gagal: Mahasiswa ini sudah mencapai kuota maksimal 3 buku aktif.' };
+    loans[idx].status = 'rejected';
+    loans[idx].autoRejected = true;
+    loans[idx].rejectedReason = 'Ditolak otomatis: Mahasiswa telah mencapai kuota maksimal 3 buku aktif';
+    loans[idx].rejectedAt = new Date().toISOString();
+    saveLoans(loans);
+    if (window.notificationSystem) {
+      window.notificationSystem.notifyLoanRejected(loans[idx], 'Batas kuota maksimal 3 buku aktif perpustakaan USK telah tercapai.');
+    }
+    return { success: false, autoRejected: true, message: 'Peminjaman ditolak otomatis oleh sistem: Mahasiswa ini sudah mencapai kuota maksimal 3 buku aktif.' };
   }
 
   const book = getBookById(loans[idx].bookId);
-  if (!book) return { success: false };
+  if (!book) return { success: false, message: 'Buku tidak ditemukan.' };
+
+  // F11 & Invariant 10: Admin TIDAK BISA mengubah status peminjaman menjadi Dipinjam jika eksemplar rusak
+  if (book.statusEksemplar === 'Rusak') {
+    return {
+      success: false,
+      message: 'Pelanggaran Aturan F11 & Invariant 10: Eksemplar buku ini berstatus RUSAK. Admin dilarang menyetujui atau mengubah statusnya menjadi Dipinjam.'
+    };
+  }
+  if (book.statusEksemplar === 'Nonaktif') {
+    return {
+      success: false,
+      message: 'Eksemplar buku berstatus NONAKTIF dan tidak dapat disetujui untuk dipinjam.'
+    };
+  }
 
   const avail = (book.stock || 0) - (book.borrowed || 0);
   if (avail <= 0) return { success: false, message: 'Stok buku habis.' };
@@ -297,12 +367,30 @@ function approveLoan(loanId, adminId) {
     approvedBy: adminId,
     approvedAt: new Date().toISOString(),
   };
-  saveLoans(loans);
 
   updateBook(loans[idx].bookId, { borrowed: (book.borrowed || 0) + 1 });
   if (window.notificationSystem) {
     window.notificationSystem.notifyLoanApproved(loans[idx]);
   }
+
+  // Jika setelah persetujuan ini kuota aktif mahasiswa telah mencapai 3 buku,
+  // OTOMATIS TOLAK permohonan peminjaman buku berikutnya yang masih menunggu (pending)
+  const updatedActiveLoans = loans.filter(l => l.userId === targetUserId && ['active', 'overdue'].includes(l.status));
+  if (updatedActiveLoans.length >= 3) {
+    loans.forEach(otherLoan => {
+      if (otherLoan.userId === targetUserId && otherLoan.status === 'pending' && otherLoan.id !== loanId) {
+        otherLoan.status = 'rejected';
+        otherLoan.autoRejected = true;
+        otherLoan.rejectedReason = 'Ditolak otomatis oleh sistem: Kuota peminjaman pengguna telah mencapai batas maksimal 3 buku aktif';
+        otherLoan.rejectedAt = new Date().toISOString();
+        if (window.notificationSystem) {
+          window.notificationSystem.notifyLoanRejected(otherLoan, 'Peminjaman buku lain telah mencapai kuota maksimal (3 buku aktif).');
+        }
+      }
+    });
+  }
+
+  saveLoans(loans);
   return { success: true, loan: loans[idx] };
 }
 

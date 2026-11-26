@@ -14,13 +14,18 @@
 
   <div class="app-layout">
     <aside class="sidebar" id="sidebar">
-      <a href="dashboard.html" class="sidebar-brand">
+      <div class="sidebar-brand" style="justify-content:space-between;">
+      <a href="dashboard.html" style="display:flex; align-items:center; gap:var(--space-3); text-decoration:none;">
         <img src="../assets/images/logo_usk_clean.png" alt="Logo USK" class="sidebar-logo-img" />
         <div class="sidebar-brand-text">
           <div class="site-name">PustakaTanyoe</div>
           <div class="site-sub">Admin Control Center</div>
         </div>
       </a>
+      <button type="button" class="sidebar-close-btn" onclick="toggleAdminSidebar()" title="Sembunyikan Menu Sidebar">
+        <i class="fas fa-chevron-left"></i>
+      </button>
+    </div>
       <div class="sidebar-nav">
         <div class="sidebar-section-label">Manajemen Utama</div>
         <a href="dashboard.html" class="sidebar-link"><span class="link-icon"><i
@@ -45,9 +50,9 @@
     <div class="app-content">
       <header class="app-header">
         <div class="flex items-center gap-3">
-          <button class="btn btn-ghost btn-icon"
-            onclick="document.getElementById('sidebar').classList.toggle('mobile-open')"><i
-              class="fas fa-bars"></i></button>
+          <button class="btn btn-ghost btn-icon sidebar-toggle-btn" onclick="toggleAdminSidebar()" title="Sembunyikan / Tampilkan Menu Sidebar">
+          <i class="fas fa-bars"></i>
+        </button>
           <h2 class="app-header-title">Klasifikasi & Kategori Bidang Ilmu</h2>
         </div>
         <div class="app-header-actions">
